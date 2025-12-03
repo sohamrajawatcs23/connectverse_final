@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectVerse - Live Cosmic Challenges</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.0/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="main.js" defer></script>
+    <style>
+        :root {
+            --cosmic-violet: #1a0b2e;
+            --cosmic-purple: #2d1b69;
+            --electric-blue: #4a90e2;
+            --stellar-pink: #e91e63;
+            --nebula-white: #f8f9fa;
+            --star-silver: #c0c0c0;
+            --void-black: #0a0a0a;
+            --aurora-gold: #ffd700;
+            --glow-blue: 0 0 20px rgba(74, 144, 226, 0.3);
+            --glow-white: 0 0 10px rgba(248, 249, 250, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--cosmic-violet), var(--cosmic-purple));
+            color: var(--nebula-white);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .event-banner {
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .event-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('resources/cosmic-event.png') center/cover;
+            opacity: 0.3;
+            z-index: 0;
+        }
+
+        .event-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .countdown-timer {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .time-unit {
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .time-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--aurora-gold);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .time-label {
+            font-size: 0.8rem;
+            color: var(--star-silver);
+            text-transform: uppercase;
+        }
+
+        .participant-orbit {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .event-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--aurora-gold), #ff6b35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .participant-avatar {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .participant-avatar:hover {
+            transform: scale(1.2);
+            box-shadow: var(--glow-blue);
+        }
+
+        .tab-container {
+            background: rgba(45, 27, 105, 0.3);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab-button {
+            background: rgba(74, 144, 226, 0.2);
+            border: 1px solid var(--electric-blue);
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            color: var(--nebula-white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+        }
+
+        .tab-button:hover {
+            background: rgba(74, 144, 226, 0.4);
+            box-shadow: var(--glow-blue);
+        }
+
+        .tab-button.active {
+            background: var(--electric-blue);
+            color: var(--void-black);
+            box-shadow: var(--glow-blue);
+        }
+
+        .event-feed {
+            background: rgba(45, 27, 105, 0.3);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .feed-item {
+            background: rgba(26, 11, 46, 0.6);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .feed-item:hover {
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+            transform: translateY(-2px);
+        }
+
+        .xp-tracker {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: rgba(45, 27, 105, 0.8);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            min-width: 200px;
+            z-index: 10;
+        }
+
+        .xp-gain {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--aurora-gold);
+            text-align: center;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .xp-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .xp-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--aurora-gold), #ff6b35);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .xp-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .xp-particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--aurora-gold);
+            border-radius: 50%;
+            animation: xpRise 3s ease-out forwards;
+        }
+
+        @keyframes xpRise {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        .join-event-btn {
+            background: linear-gradient(135deg, var(--aurora-gold), #ff6b35);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            color: var(--void-black);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .join-event-btn:hover {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .join-event-btn:disabled {
+            background: rgba(128, 128, 128, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .cosmic-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 50px;
+            padding: 12px 24px;
+            display: flex;
+            gap: 20px;
+            z-index: 50;
+        }
+
+        .nav-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(45, 27, 105, 0.5);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .nav-icon:hover {
+            background: rgba(74, 144, 226, 0.3);
+            border-color: var(--electric-blue);
+            transform: scale(1.1);
+        }
+
+        .nav-icon.active {
+            background: var(--electric-blue);
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+        }
+
+        @media (max-width: 768px) {
+            .xp-tracker {
+                position: relative;
+                top: auto;
+                right: auto;
+                transform: none;
+                margin-bottom: 1rem;
+                width: 100%;
+            }
+            
+            .participant-orbit {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .event-center {
+                width: 40px;
+                height: 40px;
+                font-size: 1.5rem;
+            }
+            
+            .participant-avatar {
+                width: 25px;
+                height: 25px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- XP Particles Container -->
+    <div class="xp-particles" id="xp-particles"></div>
+
+    <div class="min-h-screen p-4 pb-32">
+        <div class="max-w-7xl mx-auto">
+            <!-- Event Banner -->
+            <div class="event-banner">
+                <div class="event-content">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h1 class="text-3xl font-bold mb-2" style="font-family: 'Orbitron', monospace;">Cosmic Meditation Challenge</h1>
+                            <p class="text-lg">Join thousands of cosmic souls in a synchronized meditation experience</p>
+                        </div>
+                        <div class="text-6xl">🧘‍♀️</div>
+                    </div>
+                    
+                    <!-- Countdown Timer -->
+                    <div class="countdown-timer">
+                        <div class="time-unit">
+                            <div class="time-value" id="hours">02</div>
+                            <div class="time-label">Hours</div>
+                        </div>
+                        <div class="time-unit">
+                            <div class="time-value" id="minutes">34</div>
+                            <div class="time-label">Minutes</div>
+                        </div>
+                        <div class="time-unit">
+                            <div class="time-value" id="seconds">56</div>
+                            <div class="time-label">Seconds</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Participant Orbit -->
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold mb-4">Live Participants</h3>
+                        <div class="participant-orbit" id="participant-orbit">
+                            <div class="event-center">🌌</div>
+                            <!-- Participants will be added dynamically -->
+                        </div>
+                        <p class="text-gray-400 mt-2">1,247 souls connected</p>
+                    </div>
+
+                    <!-- Event Feed -->
+                    <div class="tab-container">
+                        <div class="tab-buttons">
+                            <button class="tab-button active" data-tab="activity">🌍 Global Activity</button>
+                            <button class="tab-button" data-tab="national">🇺🇸 National</button>
+                            <button class="tab-button" data-tab="local">🏙️ Local</button>
+                        </div>
+                        
+                        <div class="event-feed" id="event-feed">
+                            <!-- Feed items will be dynamically added -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- XP Tracker -->
+                <div class="xp-tracker">
+                    <h3 class="text-lg font-semibold mb-4 text-center">Your Progress</h3>
+                    <div class="xp-gain" id="xp-gain">+247 XP</div>
+                    <div class="xp-bar">
+                        <div class="xp-progress" id="xp-progress" style="width: 67%"></div>
+                    </div>
+                    <p class="text-sm text-gray-400 text-center mb-4">Level 7 • 2,847 / 3,000 XP</p>
+                    
+                    <!-- XP Chart -->
+                    <div id="xp-chart" style="height: 200px; margin-bottom: 1rem;"></div>
+                    
+                    <button class="join-event-btn" id="join-event-btn">
+                        ✨ Join Live Event ✨
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="cosmic-nav">
+        <div class="nav-icon" data-page="discover">🔮</div>
+        <div class="nav-icon" data-page="connect">💬</div>
+        <div class="nav-icon" data-page="space">🌐</div>
+        <div class="nav-icon" data-page="leaderboard">⚔️</div>
+        <div class="nav-icon" data-page="profile">🪙</div>
+    </div>
+
+    <script>
+        // Global state
+        let currentTab = 'activity';
+        let isEventActive = false;
+        let xpGained = 247;
+        let userData = {};
+        let participants = [];
+        let countdownInterval;
+        let xpChart;
+
+        // Mock event data
+        const eventData = {
+            activity: [
+                { user: "Luna Starweaver", avatar: "🌙", action: "entered deep meditation", xp: 15, timestamp: "2 min ago" },
+                { user: "Nova Flamewalker", avatar: "🔥", action: "achieved cosmic alignment", xp: 25, timestamp: "3 min ago" },
+                { user: "Crystal Guardian", avatar: "💎", action: "shared healing energy", xp: 20, timestamp: "5 min ago" },
+                { user: "Starlight Sage", avatar: "⭐", action: "reached transcendental state", xp: 30, timestamp: "7 min ago" },
+                { user: "Cosmic Dreamer", avatar: "💫", action: "connected with higher self", xp: 18, timestamp: "10 min ago" },
+                { user: "Astral Walker", avatar: "🚀", action: "traveled to distant realms", xp: 22, timestamp: "12 min ago" },
+                { user: "Moon Child", avatar: "🌸", action: "embraced lunar energy", xp: 16, timestamp: "15 min ago" },
+                { user: "Solar Warrior", avatar: "☀️", action: "absorbed cosmic rays", xp: 28, timestamp: "18 min ago" }
+            ],
+            national: [
+                { user: "USA Cosmic Leader", avatar: "🇺🇸", action: "led national meditation", xp: 50, timestamp: "5 min ago" },
+                { user: "American Stargazer", avatar: "🗽", action: "organized group ritual", xp: 35, timestamp: "12 min ago" },
+                { user: "Liberty Mystic", avatar: "🗽", action: "shared cosmic wisdom", xp: 28, timestamp: "18 min ago" }
+            ],
+            local: [
+                { user: "San Francisco Sage", avatar: "🌉", action: "hosted local gathering", xp: 40, timestamp: "8 min ago" },
+                { user: "Bay Area Mystic", avatar: "🌊", action: "guided meditation session", xp: 32, timestamp: "15 min ago" },
+                { user: "Golden Gate Guardian", avatar: "🌉", action: "led energy healing", xp: 26, timestamp: "22 min ago" }
+            ]
+        };
+
+        // Mock participants
+        const mockParticipants = [
+            { avatar: "🌙", name: "Luna" }, { avatar: "🔥", name: "Nova" }, { avatar: "💎", name: "Crystal" },
+            { avatar: "⭐", name: "Star" }, { avatar: "💫", name: "Dreamer" }, { avatar: "🚀", name: "Astral" },
+            { avatar: "🌸", name: "Moon" }, { avatar: "☀️", name: "Solar" }, { avatar: "🌊", name: "Ocean" },
+            { avatar: "🌪️", name: "Storm" }, { avatar: "🌈", name: "Rainbow" }, { avatar: "⚡", name: "Lightning" }
+        ];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            initializeEventFeed();
+            initializeParticipants();
+            initializeCountdown();
+            initializeXPChart();
+            setupEventListeners();
+            startXPAnimation();
+        });
+
+        function loadUserData() {
+            const savedData = localStorage.getItem('connectverse-user');
+            if (savedData) {
+                userData = JSON.parse(savedData);
+            }
+        }
+
+        function initializeEventFeed() {
+            createFeedItems(currentTab);
+            
+            // Animate feed entrance
+            anime({
+                targets: '.feed-item',
+                opacity: [0, 1],
+                translateX: [-30, 0],
+                duration: 600,
+                delay: anime.stagger(100),
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function initializeParticipants() {
+            const orbit = document.getElementById('participant-orbit');
+            const centerX = 100;
+            const centerY = 100;
+            const radius = 80;
+
+            // Add random participants
+            const shuffledParticipants = mockParticipants.sort(() => Math.random() - 0.5).slice(0, 8);
+            
+            shuffledParticipants.forEach((participant, index) => {
+                const angle = (index / 8) * Math.PI * 2;
+                const x = centerX + Math.cos(angle) * radius - 17.5;
+                const y = centerY + Math.sin(angle) * radius - 17.5;
+
+                const participantEl = document.createElement('div');
+                participantEl.className = 'participant-avatar';
+                participantEl.textContent = participant.avatar;
+                participantEl.style.left = x + 'px';
+                participantEl.style.top = y + 'px';
+                participantEl.title = participant.name;
+
+                orbit.appendChild(participantEl);
+
+                // Animate entrance
+                anime({
+                    targets: participantEl,
+                    scale: [0, 1],
+                    opacity: [0, 1],
+                    duration: 800,
+                    delay: index * 100,
+                    easing: 'easeOutElastic(1, .8)'
+                });
+            });
+
+            // Start orbiting animation
+            startOrbitingAnimation();
+        }
+
+        function startOrbitingAnimation() {
+            setInterval(() => {
+                const participants = document.querySelectorAll('.participant-avatar');
+                const centerX = 100;
+                const centerY = 100;
+                const radius = 80;
+                const time = Date.now() / 1000;
+
+                participants.forEach((participant, index) => {
+                    const angle = (index / participants.length) * Math.PI * 2 + time * 0.3;
+                    const x = centerX + Math.cos(angle) * radius - 17.5;
+                    const y = centerY + Math.sin(angle) * radius - 17.5;
+
+                    participant.style.left = x + 'px';
+                    participant.style.top = y + 'px';
+                });
+            }, 50);
+        }
+
+        function initializeCountdown() {
+            let timeLeft = 9345; // 2 hours, 34 minutes, 56 seconds
+            
+            countdownInterval = setInterval(() => {
+                const hours = Math.floor(timeLeft / 3600);
+                const minutes = Math.floor((timeLeft % 3600) / 60);
+                const seconds = timeLeft % 60;
+
+                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+                document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+
+                timeLeft--;
+
+                if (timeLeft < 0) {
+                    clearInterval(countdownInterval);
+                    startEvent();
+                }
+            }, 1000);
+        }
+
+        function startEvent() {
+            isEventActive = true;
+            document.getElementById('join-event-btn').textContent = '✨ Event in Progress ✨';
+            document.getElementById('join-event-btn').disabled = true;
+            
+            showNotification('Cosmic Meditation Challenge has begun!', 'success');
+            
+            // Start XP generation
+            setInterval(() => {
+                if (isEventActive) {
+                    generateXP(Math.floor(Math.random() * 10) + 5);
+                }
+            }, 3000);
+        }
+
+        function initializeXPChart() {
+            const chartDom = document.getElementById('xp-chart');
+            xpChart = echarts.init(chartDom);
+
+            const option = {
+                backgroundColor: 'transparent',
+                grid: {
+                    left: '10%',
+                    right: '10%',
+                    top: '10%',
+                    bottom: '10%'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['Start', '5min', '10min', '15min', '20min', 'Now'],
+                    axisLine: { lineStyle: { color: '#4a90e2' } },
+                    axisLabel: { color: '#c0c0c0', fontSize: 10 }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { lineStyle: { color: '#4a90e2' } },
+                    axisLabel: { color: '#c0c0c0', fontSize: 10 },
+                    splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+                },
+                series: [{
+                    data: [0, 45, 89, 134, 178, 247],
+                    type: 'line',
+                    smooth: true,
+                    lineStyle: { color: '#ffd700', width: 3 },
+                    itemStyle: { color: '#ffd700' },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0, y: 0, x2: 0, y2: 1,
+                            colorStops: [
+                                { offset: 0, color: 'rgba(255, 215, 0, 0.3)' },
+                                { offset: 1, color: 'rgba(255, 215, 0, 0.05)' }
+                            ]
+                        }
+                    }
+                }]
+            };
+
+            xpChart.setOption(option);
+        }
+
+        function generateXP(amount) {
+            xpGained += amount;
+            document.getElementById('xp-gain').textContent = `+${xpGained} XP`;
+            
+            // Update progress bar
+            const currentXP = 2847 + xpGained;
+            const maxXP = 3000;
+            const percentage = (currentXP % maxXP) / maxXP * 100;
+            document.getElementById('xp-progress').style.width = percentage + '%';
+            
+            // Create XP particles
+            createXPParticles(amount);
+            
+            // Animate XP gain
+            anime({
+                targets: '#xp-gain',
+                scale: [1, 1.2, 1],
+                duration: 500,
+                easing: 'easeOutElastic(1, .8)'
+            });
+        }
+
+        function createXPParticles(amount) {
+            const container = document.getElementById('xp-particles');
+            
+            for (let i = 0; i < Math.min(amount, 10); i++) {
+                const particle = document.createElement('div');
+                particle.className = 'xp-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 1 + 's';
+                
+                container.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, 3000);
+            }
+        }
+
+        function setupEventListeners() {
+            // Tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tab = this.dataset.tab;
+                    switchTab(tab);
+                    
+                    // Update active button
+                    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Join event button
+            document.getElementById('join-event-btn').addEventListener('click', function() {
+                if (!isEventActive) {
+                    joinEvent();
+                }
+            });
+
+            // Navigation
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const page = this.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            createFeedItems(tab);
+            
+            // Animate tab switch
+            anime({
+                targets: '.feed-item',
+                opacity: [0, 1],
+                translateY: [20, 0],
+                duration: 600,
+                delay: anime.stagger(100),
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function createFeedItems(tab) {
+            const feedContainer = document.getElementById('event-feed');
+            feedContainer.innerHTML = '';
+
+            const items = eventData[tab] || [];
+            
+            items.forEach(item => {
+                const feedItem = document.createElement('div');
+                feedItem.className = 'feed-item';
+                
+                feedItem.innerHTML = `
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-pink-400 flex items-center justify-center">
+                            ${item.avatar}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold">${item.user}</span>
+                                <span class="text-xs text-gray-400">${item.timestamp}</span>
+                            </div>
+                            <p class="text-sm text-gray-300">${item.action}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-yellow-400 font-bold">+${item.xp} XP</div>
+                        </div>
+                    </div>
+                `;
+                
+                feedContainer.appendChild(feedItem);
+            });
+        }
+
+        function joinEvent() {
+            const btn = document.getElementById('join-event-btn');
+            
+            // Animate button
+            anime({
+                targets: btn,
+                scale: [1, 0.95, 1],
+                duration: 200,
+                easing: 'easeOutElastic(1, .8)'
+            });
+            
+            showNotification('Welcome to the Cosmic Meditation Challenge!', 'success');
+            
+            // Change button state
+            btn.textContent = '✨ Connected ✨';
+            btn.disabled = true;
+            
+            // Start receiving XP
+            setTimeout(() => {
+                generateXP(50);
+                showNotification('You earned 50 XP for joining the event!', 'success');
+            }, 2000);
+        }
+
+        function startXPAnimation() {
+            // Simulate periodic XP gains
+            setInterval(() => {
+                if (isEventActive) {
+                    const xpAmount = Math.floor(Math.random() * 15) + 5;
+                    generateXP(xpAmount);
+                    
+                    // Add to feed
+                    const newActivity = {
+                        user: userData.username || "You",
+                        avatar: userData.avatar ? getAvatarEmoji(userData.avatar) : "👤",
+                        action: "gained cosmic energy",
+                        xp: xpAmount,
+                        timestamp: "Just now"
+                    };
+                    
+                    eventData.activity.unshift(newActivity);
+                    if (currentTab === 'activity') {
+                        createFeedItems('activity');
+                    }
+                }
+            }, 5000);
+        }
+
+        function getAvatarEmoji(avatar) {
+            const avatarMap = {
+                'cosmic-1': '👽',
+                'cosmic-2': '🌟',
+                'cosmic-3': '🌿',
+                'cosmic-4': '🔥',
+                'cosmic-5': '🌙',
+                'cosmic-6': '☀️'
+            };
+            return avatarMap[avatar] || '👤';
+        }
+
+        function navigateToPage(page) {
+            // Update active nav icon
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            
+            // Animate navigation
+            anime({
+                targets: 'body',
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeInExpo',
+                complete: () => {
+                    window.location.href = `${page}.html`;
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg z-50 ${
+                type === 'error' ? 'bg-red-500' : 
+                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+            } text-white`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                opacity: [0, 1],
+                translateX: [100, 0],
+                duration: 300,
+                easing: 'easeOutExpo'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    opacity: [1, 0],
+                    translateX: [0, 100],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: () => notification.remove()
+                });
+            }, 3000);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+        });
+    </script>
+</body>
+</html>

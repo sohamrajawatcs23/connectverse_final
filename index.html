@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectVerse - Enter the Cosmos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.12/typed.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="main.js" defer></script>
+    <style>
+        :root {
+            --cosmic-violet: #1a0b2e;
+            --cosmic-purple: #2d1b69;
+            --electric-blue: #4a90e2;
+            --stellar-pink: #e91e63;
+            --nebula-white: #f8f9fa;
+            --star-silver: #c0c0c0;
+            --void-black: #0a0a0a;
+            --aurora-gold: #ffd700;
+            --glow-blue: 0 0 20px rgba(74, 144, 226, 0.3);
+            --glow-white: 0 0 10px rgba(248, 249, 250, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--cosmic-violet);
+            color: var(--nebula-white);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .cosmic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .cosmic-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--nebula-white), var(--aurora-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: var(--glow-white);
+        }
+
+        .cosmic-input {
+            background: rgba(45, 27, 105, 0.3);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .cosmic-input:focus {
+            outline: none;
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+            background: rgba(45, 27, 105, 0.5);
+        }
+
+        .cosmic-button {
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            border: none;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cosmic-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(74, 144, 226, 0.4);
+        }
+
+        .cosmic-button:active {
+            transform: translateY(0);
+        }
+
+        .avatar-card {
+            background: rgba(45, 27, 105, 0.4);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            backdrop-filter: blur(15px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .avatar-card:hover {
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+            transform: translateY(-5px) scale(1.05);
+        }
+
+        .avatar-card.selected {
+            border-color: var(--aurora-gold);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .interest-tag {
+            background: rgba(74, 144, 226, 0.2);
+            border: 1px solid var(--electric-blue);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .interest-tag:hover {
+            background: rgba(74, 144, 226, 0.4);
+            box-shadow: var(--glow-blue);
+        }
+
+        .interest-tag.selected {
+            background: var(--electric-blue);
+            color: var(--void-black);
+        }
+
+        .mood-palette {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .mood-palette:hover {
+            transform: scale(1.2);
+            border-color: var(--nebula-white);
+        }
+
+        .mood-palette.selected {
+            border-color: var(--aurora-gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        .private-id {
+            font-family: 'Space Mono', monospace;
+            background: rgba(233, 30, 99, 0.2);
+            border: 1px solid var(--stellar-pink);
+            color: var(--stellar-pink);
+            text-shadow: 0 0 5px rgba(233, 30, 99, 0.5);
+        }
+
+        .form-container {
+            background: rgba(26, 11, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .particle-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .cosmic-title {
+                font-size: 2rem;
+            }
+            
+            .form-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="cosmic-canvas" class="cosmic-bg"></div>
+    
+    <div class="min-h-screen flex items-center justify-center p-4 relative">
+        <div class="particle-container" id="particles"></div>
+        
+        <div class="form-container rounded-2xl p-8 max-w-2xl w-full mx-auto relative z-10">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="cosmic-title text-5xl md:text-6xl mb-4" id="main-title">CONNECTVERSE</h1>
+                <p class="text-lg text-gray-300" id="subtitle">Enter the Cosmos</p>
+            </div>
+
+            <!-- Private ID Display -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2 text-gray-300">Your Cosmic ID</label>
+                <div class="private-id px-4 py-3 rounded-lg text-center font-mono text-lg" id="private-id">
+                    CV-7842-XP9L-3K5M
+                </div>
+                <p class="text-xs text-gray-400 mt-2">This is your unique identifier in the ConnectVerse</p>
+            </div>
+
+            <!-- Username Input -->
+            <div class="mb-6">
+                <label for="username" class="block text-sm font-medium mb-2 text-gray-300">Public Username</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    class="cosmic-input w-full px-4 py-3 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Choose your cosmic name..."
+                    maxlength="20"
+                >
+            </div>
+
+            <!-- Interests Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-3 text-gray-300">Select Your Interests</label>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="interests-container">
+                    <div class="interest-tag px-3 py-2 rounded-lg text-center text-sm" data-interest="astral">
+                        🌌 Astral Projection
+                    </div>
+                    <div class="interest-tag px-3 py-2 rounded-lg text-center text-sm" data-interest="meditation">
+                        🧘 Cosmic Meditation
+                    </div>
+                    <div class="interest-tag px-3 py-2 rounded-lg text-center text-sm" data-interest="stargazing">
+                        🔭 Stargazing
+                    </div>
+                    <div class="interest-tag px-3 py-2 rounded-lg text-center text-sm" data-interest="crystals">
+                        💎 Crystal Healing
+                    </div>
+                    <div class="interest-tag px-3 py-2 rounded-lg text-center text-sm" data-interest="tarot">
+                        🔮 Tarot Reading
+                    </div>
+                    <div class="interest-tag px-3 py-2 rounded-lg text-center text-sm" data-interest="energy">
+                        ⚡ Energy Work
+                    </div>
+                    <div class="interest-tag px-3 py-2 rounded-lg text-center text-sm" data-interest="dreams">
+                        🌙 Lucid Dreams
+                    </div>
+                    <div class="interest-tag px-3 py-2 rounded-lg text-center text-sm" data-interest="alchemy">
+                        🧪 Cosmic Alchemy
+                    </div>
+                </div>
+            </div>
+
+            <!-- Avatar Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-3 text-gray-300">Choose Your Avatar</label>
+                <div class="grid grid-cols-4 md:grid-cols-6 gap-4" id="avatar-container">
+                    <div class="avatar-card rounded-lg p-3 text-center" data-avatar="cosmic-1">
+                        <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                            👽
+                        </div>
+                        <p class="text-xs">Cosmic Being</p>
+                    </div>
+                    <div class="avatar-card rounded-lg p-3 text-center" data-avatar="cosmic-2">
+                        <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
+                            🌟
+                        </div>
+                        <p class="text-xs">Star Walker</p>
+                    </div>
+                    <div class="avatar-card rounded-lg p-3 text-center" data-avatar="cosmic-3">
+                        <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center">
+                            🌿
+                        </div>
+                        <p class="text-xs">Nature Spirit</p>
+                    </div>
+                    <div class="avatar-card rounded-lg p-3 text-center" data-avatar="cosmic-4">
+                        <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-orange-400 to-red-400 flex items-center justify-center">
+                            🔥
+                        </div>
+                        <p class="text-xs">Fire Elemental</p>
+                    </div>
+                    <div class="avatar-card rounded-lg p-3 text-center" data-avatar="cosmic-5">
+                        <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center">
+                            🌙
+                        </div>
+                        <p class="text-xs">Moon Child</p>
+                    </div>
+                    <div class="avatar-card rounded-lg p-3 text-center" data-avatar="cosmic-6">
+                        <div class="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center">
+                            ☀️
+                        </div>
+                        <p class="text-xs">Sun Warrior</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mood Palette -->
+            <div class="mb-8">
+                <label class="block text-sm font-medium mb-3 text-gray-300">Set Your Mood Palette</label>
+                <div class="flex justify-center space-x-4" id="mood-container">
+                    <div class="mood-palette" style="background: linear-gradient(45deg, #4a90e2, #e91e63);" data-mood="cosmic"></div>
+                    <div class="mood-palette" style="background: linear-gradient(45deg, #9b59b6, #3498db);" data-mood="mystical"></div>
+                    <div class="mood-palette" style="background: linear-gradient(45deg, #2ecc71, #f39c12);" data-mood="vibrant"></div>
+                    <div class="mood-palette" style="background: linear-gradient(45deg, #e74c3c, #34495e);" data-mood="intense"></div>
+                    <div class="mood-palette" style="background: linear-gradient(45deg, #1abc9c, #9b59b6);" data-mood="serene"></div>
+                </div>
+            </div>
+
+            <!-- Begin Journey Button -->
+            <div class="text-center">
+                <button 
+                    class="cosmic-button px-8 py-4 rounded-lg text-white text-lg font-bold relative overflow-hidden"
+                    id="begin-journey"
+                >
+                    <span class="relative z-10">✨ Begin Your Journey ✨</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Navigation (Hidden until login) -->
+    <div id="cosmic-nav" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 opacity-0 pointer-events-none">
+        <div class="flex space-x-6 bg-black/30 backdrop-blur-lg rounded-full px-6 py-3 border border-white/10">
+            <button class="nav-icon text-2xl hover:scale-110 transition-transform" data-page="discover">🔮</button>
+            <button class="nav-icon text-2xl hover:scale-110 transition-transform" data-page="connect">💬</button>
+            <button class="nav-icon text-2xl hover:scale-110 transition-transform" data-page="space">🌐</button>
+            <button class="nav-icon text-2xl hover:scale-110 transition-transform" data-page="leaderboard">⚔️</button>
+            <button class="nav-icon text-2xl hover:scale-110 transition-transform" data-page="profile">🪙</button>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let selectedInterests = [];
+        let selectedAvatar = null;
+        let selectedMood = 'cosmic';
+        let userData = {};
+
+        // Initialize cosmic background
+        let particles = [];
+        let particleSystem;
+
+        function setup() {
+            let canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('cosmic-canvas');
+            
+            // Initialize particles
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: random(width),
+                    y: random(height),
+                    size: random(1, 3),
+                    speedX: random(-0.5, 0.5),
+                    speedY: random(-0.5, 0.5),
+                    opacity: random(0.3, 0.8)
+                });
+            }
+        }
+
+        function draw() {
+            clear();
+            
+            // Draw cosmic background
+            for (let particle of particles) {
+                fill(248, 249, 250, particle.opacity * 255);
+                noStroke();
+                ellipse(particle.x, particle.y, particle.size);
+                
+                // Move particles
+                particle.x += particle.speedX;
+                particle.y += particle.speedY;
+                
+                // Wrap around screen
+                if (particle.x > width) particle.x = 0;
+                if (particle.x < 0) particle.x = width;
+                if (particle.y > height) particle.y = 0;
+                if (particle.y < 0) particle.y = height;
+            }
+            
+            // Draw connections between nearby particles
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    let distance = dist(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+                    if (distance < 100) {
+                        stroke(74, 144, 226, (100 - distance) * 0.5);
+                        strokeWeight(0.5);
+                        line(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+                    }
+                }
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnimations();
+            setupEventListeners();
+            generatePrivateId();
+        });
+
+        function initializeAnimations() {
+            // Animate title
+            anime({
+                targets: '#main-title',
+                opacity: [0, 1],
+                translateY: [-50, 0],
+                duration: 1000,
+                easing: 'easeOutExpo'
+            });
+
+            // Animate subtitle with typing effect
+            const subtitle = new Typed('#subtitle', {
+                strings: ['Enter the Cosmos', 'Find Your Tribe', 'Connect Universally'],
+                typeSpeed: 50,
+                backSpeed: 30,
+                backDelay: 2000,
+                loop: true
+            });
+
+            // Animate form elements
+            anime({
+                targets: '.form-container > *',
+                opacity: [0, 1],
+                translateY: [30, 0],
+                duration: 800,
+                delay: anime.stagger(100),
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function setupEventListeners() {
+            // Interest selection
+            document.querySelectorAll('.interest-tag').forEach(tag => {
+                tag.addEventListener('click', function() {
+                    const interest = this.dataset.interest;
+                    
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        selectedInterests = selectedInterests.filter(i => i !== interest);
+                    } else {
+                        this.classList.add('selected');
+                        selectedInterests.push(interest);
+                    }
+                    
+                    // Animate selection
+                    anime({
+                        targets: this,
+                        scale: [1, 1.1, 1],
+                        duration: 300,
+                        easing: 'easeOutElastic(1, .8)'
+                    });
+                });
+            });
+
+            // Avatar selection
+            document.querySelectorAll('.avatar-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove previous selection
+                    document.querySelectorAll('.avatar-card').forEach(c => c.classList.remove('selected'));
+                    
+                    // Select current
+                    this.classList.add('selected');
+                    selectedAvatar = this.dataset.avatar;
+                    
+                    // Animate selection
+                    anime({
+                        targets: this,
+                        rotateY: [0, 360],
+                        duration: 600,
+                        easing: 'easeOutExpo'
+                    });
+                });
+            });
+
+            // Mood palette selection
+            document.querySelectorAll('.mood-palette').forEach(palette => {
+                palette.addEventListener('click', function() {
+                    // Remove previous selection
+                    document.querySelectorAll('.mood-palette').forEach(p => p.classList.remove('selected'));
+                    
+                    // Select current
+                    this.classList.add('selected');
+                    selectedMood = this.dataset.mood;
+                    
+                    // Update UI colors based on mood
+                    updateMoodColors(selectedMood);
+                    
+                    // Animate selection
+                    anime({
+                        targets: this,
+                        scale: [1, 1.3, 1],
+                        duration: 400,
+                        easing: 'easeOutElastic(1, .8)'
+                    });
+                });
+            });
+
+            // Begin journey button
+            document.getElementById('begin-journey').addEventListener('click', function(e) {
+                const username = document.getElementById('username').value.trim();
+                
+                if (!username) {
+                    showNotification('Please enter a username', 'error');
+                    return;
+                }
+                
+                if (!selectedAvatar) {
+                    showNotification('Please select an avatar', 'error');
+                    return;
+                }
+                
+                if (selectedInterests.length === 0) {
+                    showNotification('Please select at least one interest', 'error');
+                    return;
+                }
+                
+                // Create ripple effect
+                createRipple(e, this);
+                
+                // Save user data
+                userData = {
+                    privateId: document.getElementById('private-id').textContent,
+                    username: username,
+                    interests: selectedInterests,
+                    avatar: selectedAvatar,
+                    mood: selectedMood,
+                    timestamp: Date.now()
+                };
+                
+                localStorage.setItem('connectverse-user', JSON.stringify(userData));
+                
+                // Animate transition
+                anime({
+                    targets: '.form-container',
+                    opacity: [1, 0],
+                    scale: [1, 0.8],
+                    duration: 600,
+                    easing: 'easeInExpo',
+                    complete: function() {
+                        // Show navigation
+                        anime({
+                            targets: '#cosmic-nav',
+                            opacity: [0, 1],
+                            translateY: [50, 0],
+                            duration: 800,
+                            easing: 'easeOutExpo'
+                        });
+                        
+                        // Navigate to discover page
+                        setTimeout(() => {
+                            window.location.href = 'discover.html';
+                        }, 1000);
+                    }
+                });
+            });
+        }
+
+        function generatePrivateId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let id = 'CV-';
+            
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 4; j++) {
+                    id += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                if (i < 2) id += '-';
+            }
+            
+            document.getElementById('private-id').textContent = id;
+        }
+
+        function updateMoodColors(mood) {
+            const root = document.documentElement;
+            
+            switch(mood) {
+                case 'cosmic':
+                    root.style.setProperty('--electric-blue', '#4a90e2');
+                    root.style.setProperty('--stellar-pink', '#e91e63');
+                    break;
+                case 'mystical':
+                    root.style.setProperty('--electric-blue', '#9b59b6');
+                    root.style.setProperty('--stellar-pink', '#3498db');
+                    break;
+                case 'vibrant':
+                    root.style.setProperty('--electric-blue', '#2ecc71');
+                    root.style.setProperty('--stellar-pink', '#f39c12');
+                    break;
+                case 'intense':
+                    root.style.setProperty('--electric-blue', '#e74c3c');
+                    root.style.setProperty('--stellar-pink', '#34495e');
+                    break;
+                case 'serene':
+                    root.style.setProperty('--electric-blue', '#1abc9c');
+                    root.style.setProperty('--stellar-pink', '#9b59b6');
+                    break;
+            }
+        }
+
+        function createRipple(e, button) {
+            const ripple = document.createElement('span');
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+            
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            ripple.classList.add('ripple');
+            
+            button.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg z-50 ${
+                type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            } text-white`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                opacity: [0, 1],
+                translateX: [100, 0],
+                duration: 300,
+                easing: 'easeOutExpo'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    opacity: [1, 0],
+                    translateX: [0, 100],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: () => notification.remove()
+                });
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

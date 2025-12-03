@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectVerse - Tune Space</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="main.js" defer></script>
+    <style>
+        :root {
+            --cosmic-violet: #1a0b2e;
+            --cosmic-purple: #2d1b69;
+            --electric-blue: #4a90e2;
+            --stellar-pink: #e91e63;
+            --nebula-white: #f8f9fa;
+            --star-silver: #c0c0c0;
+            --void-black: #0a0a0a;
+            --aurora-gold: #ffd700;
+            --glow-blue: 0 0 20px rgba(74, 144, 226, 0.3);
+            --glow-white: 0 0 10px rgba(248, 249, 250, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--cosmic-violet), var(--cosmic-purple));
+            color: var(--nebula-white);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .space-header {
+            background: rgba(45, 27, 105, 0.4);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .xp-badge {
+            background: linear-gradient(135deg, var(--aurora-gold), #ff6b35);
+            color: var(--void-black);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 0.9rem;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        }
+
+        .feed-container {
+            background: rgba(45, 27, 105, 0.3);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            height: calc(100vh - 300px);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .feed-item {
+            background: rgba(26, 11, 46, 0.6);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feed-item:hover {
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+            transform: translateY(-2px);
+        }
+
+        .feed-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--electric-blue), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feed-item:hover::before {
+            opacity: 1;
+        }
+
+        .members-panel {
+            background: rgba(45, 27, 105, 0.3);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1rem;
+            height: calc(100vh - 300px);
+            position: relative;
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .member-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: var(--glow-blue);
+        }
+
+        .orbiting-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .orbit-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--aurora-gold), #ff6b35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .orbit-member {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .orbit-member:hover {
+            transform: scale(1.2);
+            box-shadow: var(--glow-blue);
+        }
+
+        .quick-access-bar {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 50px;
+            padding: 12px 24px;
+            display: flex;
+            gap: 20px;
+            z-index: 40;
+        }
+
+        .quick-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(45, 27, 105, 0.6);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.3rem;
+            position: relative;
+        }
+
+        .quick-button:hover {
+            background: rgba(74, 144, 226, 0.4);
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+            transform: scale(1.1);
+        }
+
+        .quick-button::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .quick-button:hover::after {
+            opacity: 1;
+        }
+
+        .cosmic-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 50px;
+            padding: 12px 24px;
+            display: flex;
+            gap: 20px;
+            z-index: 50;
+        }
+
+        .nav-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(45, 27, 105, 0.5);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .nav-icon:hover {
+            background: rgba(74, 144, 226, 0.3);
+            border-color: var(--electric-blue);
+            transform: scale(1.1);
+        }
+
+        .nav-icon.active {
+            background: var(--electric-blue);
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: rgba(45, 27, 105, 0.9);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--electric-blue);
+            border-radius: 50%;
+            animation: float 6s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .orbiting-container {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .orbit-center {
+                width: 40px;
+                height: 40px;
+                font-size: 1.5rem;
+            }
+            
+            .orbit-member {
+                width: 25px;
+                height: 25px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Particles -->
+    <div class="floating-particles" id="particles"></div>
+
+    <div class="min-h-screen p-4 pb-32">
+        <div class="max-w-7xl mx-auto">
+            <!-- Space Header -->
+            <div class="space-header">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h1 class="text-3xl font-bold mb-2" style="font-family: 'Orbitron', monospace;" id="space-name">
+                            Cosmic Sanctuary
+                        </h1>
+                        <p class="text-gray-300">A sacred space for bonded cosmic souls</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="xp-badge mb-2" id="xp-badge">
+                            Level 7 • 2,847 XP
+                        </div>
+                        <p class="text-sm text-gray-400">Space Rank: #42</p>
+                    </div>
+                </div>
+                
+                <!-- Space Banner -->
+                <div class="h-20 rounded-lg bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 opacity-80 flex items-center justify-center">
+                    <p class="text-lg font-semibold">✨ Where Cosmic Bonds Flourish ✨</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Feed -->
+                <div class="lg:col-span-2">
+                    <div class="feed-container" id="feed-container">
+                        <!-- Feed items will be dynamically added here -->
+                    </div>
+                </div>
+
+                <!-- Members Panel -->
+                <div class="members-panel">
+                    <h3 class="text-lg font-semibold mb-4 text-center">Active Members</h3>
+                    
+                    <!-- Orbiting Members -->
+                    <div class="orbiting-container" id="orbiting-container">
+                        <div class="orbit-center">🌌</div>
+                        <!-- Orbiting members will be added dynamically -->
+                    </div>
+
+                    <!-- Member List -->
+                    <div class="mt-6 space-y-3" id="member-list">
+                        <!-- Member items will be added dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Access Bar -->
+    <div class="quick-access-bar">
+        <div class="quick-button" data-tooltip="Group Chat" id="chat-btn">💬</div>
+        <div class="quick-button" data-tooltip="Create Post" id="post-btn">🪐</div>
+        <div class="quick-button" data-tooltip="Schedule Event" id="event-btn">⚡</div>
+        <div class="quick-button" data-tooltip="Leaderboard" id="leaderboard-btn">🏆</div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="cosmic-nav">
+        <div class="nav-icon" data-page="discover">🔮</div>
+        <div class="nav-icon" data-page="connect">💬</div>
+        <div class="nav-icon active" data-page="space">🌐</div>
+        <div class="nav-icon" data-page="leaderboard">⚔️</div>
+        <div class="nav-icon" data-page="profile">🪙</div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div class="modal" id="post-modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4" style="font-family: 'Orbitron', monospace;">Create Cosmic Post</h3>
+            <textarea 
+                class="w-full h-32 bg-black/30 border border-white/20 rounded-lg p-3 text-white resize-none"
+                placeholder="Share your cosmic thoughts..."
+                id="post-content"
+                maxlength="500"
+            ></textarea>
+            <div class="flex justify-end gap-3 mt-4">
+                <button class="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors" id="cancel-post">
+                    Cancel
+                </button>
+                <button class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors" id="submit-post">
+                    Share
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Event Modal -->
+    <div class="modal" id="event-modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4" style="font-family: 'Orbitron', monospace;">Create Cosmic Event</h3>
+            <input 
+                type="text"
+                class="w-full bg-black/30 border border-white/20 rounded-lg p-3 text-white mb-3"
+                placeholder="Event name..."
+                id="event-name"
+                maxlength="50"
+            >
+            <textarea 
+                class="w-full h-24 bg-black/30 border border-white/20 rounded-lg p-3 text-white resize-none mb-3"
+                placeholder="Event description..."
+                id="event-description"
+                maxlength="200"
+            ></textarea>
+            <select class="w-full bg-black/30 border border-white/20 rounded-lg p-3 text-white mb-4" id="event-type">
+                <option value="meditation">🧘 Group Meditation</option>
+                <option value="discussion">💭 Cosmic Discussion</option>
+                <option value="ritual">🔮 Sacred Ritual</option>
+                <option value="celebration">🎉 Cosmic Celebration</option>
+                <option value="challenge">⚡ Spiritual Challenge</option>
+            </select>
+            <div class="flex justify-end gap-3">
+                <button class="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors" id="cancel-event">
+                    Cancel
+                </button>
+                <button class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-500 transition-colors" id="submit-event">
+                    Create Event
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let spaceData = {};
+        let members = [];
+        let feedItems = [];
+        let userData = {};
+        let orbitingMembers = [];
+
+        // Mock space data
+        const mockSpaceData = {
+            name: "Cosmic Sanctuary",
+            level: 7,
+            xp: 2847,
+            rank: 42,
+            description: "A sacred space for bonded cosmic souls"
+        };
+
+        // Mock members
+        const mockMembers = [
+            { id: 1, name: "Luna Starweaver", avatar: "🌙", status: "online", level: 8, xp: 3156 },
+            { id: 2, name: "Nova Flamewalker", avatar: "🔥", status: "online", level: 6, xp: 2456 },
+            { id: 3, name: "Cosmic Dreamer", avatar: "💫", status: "away", level: 9, xp: 3876 },
+            { id: 4, name: "Crystal Guardian", avatar: "💎", status: "online", level: 7, xp: 2987 },
+            { id: 5, name: "Starlight Sage", avatar: "⭐", status: "online", level: 8, xp: 3234 },
+            { id: 6, name: "Astral Walker", avatar: "🌌", status: "offline", level: 5, xp: 1876 }
+        ];
+
+        // Mock feed items
+        const mockFeedItems = [
+            {
+                type: "post",
+                author: "Luna Starweaver",
+                avatar: "🌙",
+                content: "Just had the most amazing lucid dream about floating through nebulae. The colors were beyond anything I've ever seen! ✨",
+                timestamp: "2 hours ago",
+                likes: 12,
+                comments: 3
+            },
+            {
+                type: "event",
+                author: "Nova Flamewalker",
+                avatar: "🔥",
+                title: "Group Meditation Session",
+                content: "Join us tonight at 8 PM for a guided meditation under the stars. We'll be focusing on cosmic energy alignment.",
+                timestamp: "4 hours ago",
+                participants: 8,
+                maxParticipants: 20
+            },
+            {
+                type: "achievement",
+                author: "Crystal Guardian",
+                avatar: "💎",
+                title: "Reached Level 7!",
+                content: "Finally reached level 7 after weeks of daily meditation and cosmic exploration. The journey continues! 🎆",
+                timestamp: "6 hours ago",
+                xp: 500
+            },
+            {
+                type: "voice",
+                author: "Starlight Sage",
+                avatar: "⭐",
+                title: "Voice Thread: Cosmic Theories",
+                content: "Started a discussion about parallel universes and their connection to our dreams. What's your take?",
+                timestamp: "8 hours ago",
+                duration: "15:32",
+                listeners: 5
+            },
+            {
+                type: "poll",
+                author: "Cosmic Dreamer",
+                avatar: "💫",
+                title: "Favorite Cosmic Activity",
+                content: "What's your preferred way to connect with the cosmos?",
+                timestamp: "12 hours ago",
+                votes: 23,
+                options: [
+                    { text: "Stargazing", votes: 45 },
+                    { text: "Meditation", votes: 30 },
+                    { text: "Dream Work", votes: 25 }
+                ]
+            }
+        ];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            initializeSpace();
+            setupEventListeners();
+            createFloatingParticles();
+            startOrbitingAnimation();
+        });
+
+        function loadUserData() {
+            const savedData = localStorage.getItem('connectverse-user');
+            if (savedData) {
+                userData = JSON.parse(savedData);
+            }
+
+            // Load bond data if available
+            const bondData = localStorage.getItem('connectverse-bond');
+            if (bondData) {
+                spaceData = JSON.parse(bondData);
+                // Customize space name based on bond
+                mockSpaceData.name = `${userData.username} & ${spaceData.partner.name}'s Sanctuary`;
+            }
+        }
+
+        function initializeSpace() {
+            // Update space header
+            document.getElementById('space-name').textContent = mockSpaceData.name;
+            document.getElementById('xp-badge').textContent = `Level ${mockSpaceData.level} • ${mockSpaceData.xp} XP`;
+
+            // Initialize members
+            members = mockMembers;
+            createMemberList();
+            createOrbitingMembers();
+
+            // Initialize feed
+            feedItems = mockFeedItems;
+            createFeedItems();
+
+            // Animate entrance
+            anime({
+                targets: '.space-header, .feed-container, .members-panel',
+                opacity: [0, 1],
+                translateY: [30, 0],
+                duration: 800,
+                delay: anime.stagger(200),
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function createMemberList() {
+            const memberList = document.getElementById('member-list');
+            memberList.innerHTML = '';
+
+            members.slice(0, 4).forEach(member => {
+                const memberDiv = document.createElement('div');
+                memberDiv.className = 'flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer';
+                
+                const statusColor = member.status === 'online' ? 'bg-green-500' : 
+                                   member.status === 'away' ? 'bg-yellow-500' : 'bg-gray-500';
+                
+                memberDiv.innerHTML = `
+                    <div class="relative">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-pink-400 flex items-center justify-center text-sm">
+                            ${member.avatar}
+                        </div>
+                        <div class="absolute -bottom-1 -right-1 w-3 h-3 ${statusColor} rounded-full border-2 border-gray-900"></div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium text-sm">${member.name}</p>
+                        <p class="text-xs text-gray-400">Level ${member.level} • ${member.xp} XP</p>
+                    </div>
+                `;
+                
+                memberList.appendChild(memberDiv);
+            });
+        }
+
+        function createOrbitingMembers() {
+            const container = document.getElementById('orbiting-container');
+            const centerX = 100;
+            const centerY = 100;
+            const radius = 70;
+
+            // Clear existing members
+            container.querySelectorAll('.orbit-member').forEach(el => el.remove());
+
+            members.slice(0, 5).forEach((member, index) => {
+                const angle = (index / 5) * Math.PI * 2;
+                const x = centerX + Math.cos(angle) * radius - 17.5; // 17.5 is half of member size
+                const y = centerY + Math.sin(angle) * radius - 17.5;
+
+                const memberEl = document.createElement('div');
+                memberEl.className = 'orbit-member';
+                memberEl.textContent = member.avatar;
+                memberEl.style.left = x + 'px';
+                memberEl.style.top = y + 'px';
+                memberEl.title = member.name;
+
+                container.appendChild(memberEl);
+
+                // Animate orbit
+                anime({
+                    targets: memberEl,
+                    rotate: `${index * 72}deg`,
+                    duration: 10000,
+                    easing: 'linear',
+                    loop: true
+                });
+            });
+        }
+
+        function startOrbitingAnimation() {
+            // Continuously update orbiting positions
+            setInterval(() => {
+                const container = document.getElementById('orbiting-container');
+                const members = container.querySelectorAll('.orbit-member');
+                const centerX = 100;
+                const centerY = 100;
+                const radius = 70;
+                const time = Date.now() / 1000;
+
+                members.forEach((member, index) => {
+                    const angle = (index / members.length) * Math.PI * 2 + time * 0.5;
+                    const x = centerX + Math.cos(angle) * radius - 17.5;
+                    const y = centerY + Math.sin(angle) * radius - 17.5;
+
+                    member.style.left = x + 'px';
+                    member.style.top = y + 'px';
+                });
+            }, 50);
+        }
+
+        function createFeedItems() {
+            const feedContainer = document.getElementById('feed-container');
+            feedContainer.innerHTML = '';
+
+            feedItems.forEach(item => {
+                const feedDiv = document.createElement('div');
+                feedDiv.className = 'feed-item';
+
+                let content = '';
+                
+                switch(item.type) {
+                    case 'post':
+                        content = createPostItem(item);
+                        break;
+                    case 'event':
+                        content = createEventItem(item);
+                        break;
+                    case 'achievement':
+                        content = createAchievementItem(item);
+                        break;
+                    case 'voice':
+                        content = createVoiceItem(item);
+                        break;
+                    case 'poll':
+                        content = createPollItem(item);
+                        break;
+                }
+
+                feedDiv.innerHTML = content;
+                feedContainer.appendChild(feedDiv);
+            });
+        }
+
+        function createPostItem(item) {
+            return `
+                <div class="flex items-start gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-pink-400 flex items-center justify-center">
+                        ${item.avatar}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h4 class="font-semibold">${item.author}</h4>
+                            <span class="text-xs text-gray-400">${item.timestamp}</span>
+                        </div>
+                        <p class="text-gray-300">${item.content}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-gray-400">
+                    <button class="hover:text-blue-400 transition-colors">👍 ${item.likes}</button>
+                    <button class="hover:text-blue-400 transition-colors">💬 ${item.comments}</button>
+                    <button class="hover:text-blue-400 transition-colors">🔄 Share</button>
+                </div>
+            `;
+        }
+
+        function createEventItem(item) {
+            return `
+                <div class="flex items-start gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-red-400 flex items-center justify-center">
+                        ${item.avatar}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h4 class="font-semibold">${item.author}</h4>
+                            <span class="bg-purple-500/20 text-purple-300 px-2 py-1 rounded text-xs">EVENT</span>
+                            <span class="text-xs text-gray-400">${item.timestamp}</span>
+                        </div>
+                        <h5 class="font-semibold mb-2">${item.title}</h5>
+                        <p class="text-gray-300 mb-3">${item.content}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-400">👥 ${item.participants}/${item.maxParticipants} participants</span>
+                            <button class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-500 transition-colors text-sm">
+                                Join Event
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createAchievementItem(item) {
+            return `
+                <div class="flex items-start gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center">
+                        ${item.avatar}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h4 class="font-semibold">${item.author}</h4>
+                            <span class="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-xs">ACHIEVEMENT</span>
+                            <span class="text-xs text-gray-400">${item.timestamp}</span>
+                        </div>
+                        <h5 class="font-semibold mb-2">${item.title}</h5>
+                        <p class="text-gray-300 mb-2">${item.content}</p>
+                        <span class="text-sm text-yellow-400">+${item.xp} XP earned</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createVoiceItem(item) {
+            return `
+                <div class="flex items-start gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-blue-400 flex items-center justify-center">
+                        ${item.avatar}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h4 class="font-semibold">${item.author}</h4>
+                            <span class="bg-green-500/20 text-green-300 px-2 py-1 rounded text-xs">VOICE</span>
+                            <span class="text-xs text-gray-400">${item.timestamp}</span>
+                        </div>
+                        <h5 class="font-semibold mb-2">${item.title}</h5>
+                        <p class="text-gray-300 mb-3">${item.content}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-400">🎧 ${item.listeners} listening • ${item.duration}</span>
+                            <button class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-500 transition-colors text-sm">
+                                Listen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createPollItem(item) {
+            const totalVotes = item.options.reduce((sum, opt) => sum + opt.votes, 0);
+            return `
+                <div class="flex items-start gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center">
+                        ${item.avatar}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h4 class="font-semibold">${item.author}</h4>
+                            <span class="bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded text-xs">POLL</span>
+                            <span class="text-xs text-gray-400">${item.timestamp}</span>
+                        </div>
+                        <h5 class="font-semibold mb-2">${item.title}</h5>
+                        <p class="text-gray-300 mb-3">${item.content}</p>
+                        <div class="space-y-2 mb-3">
+                            ${item.options.map(option => `
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 bg-gray-700 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: ${(option.votes / totalVotes * 100)}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-400">${option.text} (${option.votes})</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <span class="text-sm text-gray-400">📊 ${item.votes} total votes</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function setupEventListeners() {
+            // Quick access buttons
+            document.getElementById('chat-btn').addEventListener('click', () => showNotification('Group chat opened', 'success'));
+            document.getElementById('post-btn').addEventListener('click', () => showModal('post-modal'));
+            document.getElementById('event-btn').addEventListener('click', () => showModal('event-modal'));
+            document.getElementById('leaderboard-btn').addEventListener('click', () => window.location.href = 'leaderboard.html');
+
+            // Modal controls
+            document.getElementById('cancel-post').addEventListener('click', () => hideModal('post-modal'));
+            document.getElementById('submit-post').addEventListener('click', submitPost);
+            document.getElementById('cancel-event').addEventListener('click', () => hideModal('event-modal'));
+            document.getElementById('submit-event').addEventListener('click', submitEvent);
+
+            // Navigation
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const page = this.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+
+            // Close modals on outside click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('show');
+                    }
+                });
+            });
+        }
+
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('show');
+            
+            anime({
+                targets: modal.querySelector('.modal-content'),
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 300,
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function hideModal(modalId) {
+            const modal = document.getElementById(modalId);
+            
+            anime({
+                targets: modal.querySelector('.modal-content'),
+                scale: [1, 0.8],
+                opacity: [1, 0],
+                duration: 200,
+                easing: 'easeInExpo',
+                complete: () => {
+                    modal.classList.remove('show');
+                }
+            });
+        }
+
+        function submitPost() {
+            const content = document.getElementById('post-content').value.trim();
+            if (!content) return;
+
+            const newPost = {
+                type: "post",
+                author: userData.username || "You",
+                avatar: userData.avatar ? getAvatarEmoji(userData.avatar) : "👤",
+                content: content,
+                timestamp: "Just now",
+                likes: 0,
+                comments: 0
+            };
+
+            // Add to beginning of feed
+            feedItems.unshift(newPost);
+            createFeedItems();
+
+            // Clear and hide modal
+            document.getElementById('post-content').value = '';
+            hideModal('post-modal');
+
+            showNotification('Post shared successfully!', 'success');
+        }
+
+        function submitEvent() {
+            const name = document.getElementById('event-name').value.trim();
+            const description = document.getElementById('event-description').value.trim();
+            const type = document.getElementById('event-type').value;
+
+            if (!name || !description) return;
+
+            const eventTypes = {
+                meditation: { emoji: "🧘", label: "MEDITATION" },
+                discussion: { emoji: "💭", label: "DISCUSSION" },
+                ritual: { emoji: "🔮", label: "RITUAL" },
+                celebration: { emoji: "🎉", label: "CELEBRATION" },
+                challenge: { emoji: "⚡", label: "CHALLENGE" }
+            };
+
+            const eventType = eventTypes[type];
+
+            const newEvent = {
+                type: "event",
+                author: userData.username || "You",
+                avatar: userData.avatar ? getAvatarEmoji(userData.avatar) : "👤",
+                title: name,
+                content: description,
+                timestamp: "Just now",
+                participants: 1,
+                maxParticipants: 20
+            };
+
+            // Add to beginning of feed
+            feedItems.unshift(newEvent);
+            createFeedItems();
+
+            // Clear and hide modal
+            document.getElementById('event-name').value = '';
+            document.getElementById('event-description').value = '';
+            hideModal('event-modal');
+
+            showNotification('Event created successfully!', 'success');
+        }
+
+        function getAvatarEmoji(avatar) {
+            const avatarMap = {
+                'cosmic-1': '👽',
+                'cosmic-2': '🌟',
+                'cosmic-3': '🌿',
+                'cosmic-4': '🔥',
+                'cosmic-5': '🌙',
+                'cosmic-6': '☀️'
+            };
+            return avatarMap[avatar] || '👤';
+        }
+
+        function createFloatingParticles() {
+            const particlesContainer = document.getElementById('particles');
+            
+            setInterval(() => {
+                if (document.querySelectorAll('.particle').length < 20) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                    particle.style.animationDelay = Math.random() * 2 + 's';
+                    
+                    particlesContainer.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        particle.remove();
+                    }, 8000);
+                }
+            }, 500);
+        }
+
+        function navigateToPage(page) {
+            // Update active nav icon
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            
+            // Animate navigation
+            anime({
+                targets: 'body',
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeInExpo',
+                complete: () => {
+                    window.location.href = `${page}.html`;
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg z-50 ${
+                type === 'error' ? 'bg-red-500' : 
+                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+            } text-white`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                opacity: [0, 1],
+                translateX: [100, 0],
+                duration: 300,
+                easing: 'easeOutExpo'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    opacity: [1, 0],
+                    translateX: [0, 100],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: () => notification.remove()
+                });
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

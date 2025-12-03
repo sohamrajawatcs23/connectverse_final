@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectVerse - Galactic Hierarchy</title>
+    <script>
+        // Suppress Tailwind CDN warning
+        window.tailwind = { config: { corePlugins: { preflight: true } } };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="main.js" defer></script>
+    <style>
+        :root {
+            --cosmic-violet: #1a0b2e;
+            --cosmic-purple: #2d1b69;
+            --electric-blue: #4a90e2;
+            --stellar-pink: #e91e63;
+            --nebula-white: #f8f9fa;
+            --star-silver: #c0c0c0;
+            --void-black: #0a0a0a;
+            --aurora-gold: #ffd700;
+            --glow-blue: 0 0 20px rgba(74, 144, 226, 0.3);
+            --glow-white: 0 0 10px rgba(248, 249, 250, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--cosmic-violet);
+            color: var(--nebula-white);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .cosmic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .leaderboard-container {
+            position: relative;
+            height: calc(100vh - 140px);
+            background: rgba(45, 27, 105, 0.2);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(45, 27, 105, 0.8);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 1rem;
+            z-index: 10;
+            min-width: 250px;
+        }
+
+        .region-button {
+            background: rgba(74, 144, 226, 0.2);
+            border: 1px solid var(--electric-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: var(--nebula-white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+
+        .region-button:hover {
+            background: rgba(74, 144, 226, 0.4);
+            box-shadow: var(--glow-blue);
+        }
+
+        .region-button.active {
+            background: var(--electric-blue);
+            color: var(--void-black);
+            font-weight: 600;
+        }
+
+        .user-info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(45, 27, 105, 0.8);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 1rem;
+            z-index: 10;
+            min-width: 200px;
+        }
+
+        .rank-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--aurora-gold), #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            color: var(--aurora-gold);
+            font-size: 1.2rem;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--star-silver);
+            text-transform: uppercase;
+        }
+
+        .constellation-3d {
+            width: 100%;
+            height: 100%;
+        }
+
+        .loading-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: var(--electric-blue);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .user-card {
+            position: absolute;
+            background: rgba(45, 27, 105, 0.9);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 12px;
+            padding: 1rem;
+            min-width: 200px;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .user-card.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .join-event-btn {
+            background: linear-gradient(135deg, var(--aurora-gold), #ff6b35);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            color: var(--void-black);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+
+        .join-event-btn:hover {
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Unique Contender Avatar Styles */
+        .avatar-global {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #1a0b2e, #2d1b69, #4a90e2);
+            background-size: 400% 400%;
+            animation: nebulaSwirl 4s ease-in-out infinite;
+            overflow: hidden;
+        }
+
+        .avatar-global::before {
+            content: '👁️';
+            position: absolute;
+            top: 15%;
+            left: 20%;
+            font-size: 1rem;
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .avatar-global::after {
+            content: '👁️';
+            position: absolute;
+            top: 15%;
+            right: 20%;
+            font-size: 1rem;
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes nebulaSwirl {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .avatar-national {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a0b2e, #2d1b69);
+            box-shadow: 
+                0 0 20px rgba(255, 215, 0, 0.8),
+                inset 0 0 20px rgba(255, 215, 0, 0.3);
+            animation: supernovaPulse 2s ease-in-out infinite;
+        }
+
+        .avatar-national::before {
+            content: '💫';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            animation: starTwinkle 1.5s ease-in-out infinite;
+        }
+
+        @keyframes supernovaPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), inset 0 0 20px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(255, 215, 0, 1), inset 0 0 30px rgba(255, 215, 0, 0.5); }
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        .avatar-state {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2d1b69, #1abc9c);
+            box-shadow: 
+                5px 5px 0 #4a90e2,
+                -5px -5px 0 #4a90e2,
+                5px -5px 0 #4a90e2,
+                -5px 5px 0 #4a90e2;
+        }
+
+        .avatar-state::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #4a90e2, transparent);
+            border-radius: 50%;
+            box-shadow: 
+                10px 0 0 -5px #4a90e2,
+                -10px 0 0 -5px #4a90e2,
+                0 10px 0 -5px #4a90e2,
+                0 -10px 0 -5px #4a90e2;
+        }
+
+        .avatar-city {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            border: 2px solid #4a90e2;
+            box-shadow: 
+                0 0 10px #4a90e2,
+                inset 0 0 10px rgba(74, 144, 226, 0.3);
+        }
+
+        .avatar-city::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 30%;
+            width: 2px;
+            height: 20px;
+            background: #4a90e2;
+            box-shadow: 
+                10px 0 0 #4a90e2,
+                20px 0 0 #4a90e2;
+        }
+
+        .avatar-city::after {
+            content: '';
+            position: absolute;
+            bottom: 20%;
+            left: 20%;
+            width: 20px;
+            height: 2px;
+            background: #4a90e2;
+            box-shadow: 
+                0 10px 0 #4a90e2,
+                0 20px 0 #4a90e2;
+        }
+
+        .cosmic-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 50px;
+            padding: 12px 24px;
+            display: flex;
+            gap: 20px;
+            z-index: 50;
+        }
+
+        .nav-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(45, 27, 105, 0.5);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .nav-icon:hover {
+            background: rgba(74, 144, 226, 0.3);
+            border-color: var(--electric-blue);
+            transform: scale(1.1);
+        }
+
+        .nav-icon.active {
+            background: var(--electric-blue);
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(45, 27, 105, 0.8);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            color: var(--nebula-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(74, 144, 226, 0.4);
+            border-color: var(--electric-blue);
+        }
+
+        @media (max-width: 768px) {
+            .control-panel, .user-info-panel {
+                position: relative;
+                top: auto;
+                left: auto;
+                right: auto;
+                margin-bottom: 1rem;
+                width: 100%;
+            }
+            
+            .leaderboard-container {
+                height: calc(100vh - 300px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="cosmic-canvas" class="cosmic-bg"></div>
+    
+    <div class="min-h-screen p-4 pb-32">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <h1 class="text-4xl font-bold mb-2" style="font-family: 'Orbitron', monospace;">GALACTIC HIERARCHY</h1>
+                <p class="text-gray-300">Explore the cosmic rankings across the universe</p>
+            </div>
+
+            <!-- Mobile Layout -->
+            <div class="md:hidden mb-4 space-y-4">
+                <div class="control-panel">
+                    <h3 class="font-semibold mb-3">Select Region</h3>
+                    <button class="region-button active" data-region="global">🌌 Global Universe</button>
+                    <button class="region-button" data-region="national">🌍 National Galaxy</button>
+                    <button class="region-button" data-region="state">🌟 State Cluster</button>
+                    <button class="region-button" data-region="city">🏙️ City Constellation</button>
+                </div>
+                
+                <div class="user-info-panel">
+                    <div class="rank-title text-xl mb-2" id="user-rank">Cosmic Emperor</div>
+                    <div class="user-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="user-xp">2,847</div>
+                            <div class="stat-label">XP</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="user-tokens">156</div>
+                            <div class="stat-label">Tokens</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="user-rank-num">#42</div>
+                            <div class="stat-label">Rank</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main 3D Container -->
+            <div class="leaderboard-container">
+                <div class="loading-text" id="loading-text">Initializing Cosmic Map...</div>
+                <div id="constellation-3d" class="constellation-3d"></div>
+
+                <!-- Desktop Control Panel -->
+                <div class="control-panel hidden md:block">
+                    <h3 class="font-semibold mb-3">Select Region</h3>
+                    <button class="region-button active" data-region="global">🌌 Global Universe</button>
+                    <button class="region-button" data-region="national">🌍 National Galaxy</button>
+                    <button class="region-button" data-region="state">🌟 State Cluster</button>
+                    <button class="region-button" data-region="city">🏙️ City Constellation</button>
+                </div>
+
+                <!-- Desktop User Info Panel -->
+                <div class="user-info-panel hidden md:block">
+                    <div class="rank-title text-xl mb-2" id="desktop-user-rank">Cosmic Emperor</div>
+                    <div class="user-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="desktop-user-xp">2,847</div>
+                            <div class="stat-label">XP</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="desktop-user-tokens">156</div>
+                            <div class="stat-label">Tokens</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="desktop-user-rank-num">#42</div>
+                            <div class="stat-label">Rank</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zoom Controls -->
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoom-in" title="Zoom In">+</button>
+                    <button class="zoom-btn" id="zoom-out" title="Zoom Out">−</button>
+                    <button class="zoom-btn" id="reset-view" title="Reset View">⌂</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Detail Card -->
+    <div class="user-card" id="user-card">
+        <div id="card-avatar-container">
+            <div class="user-avatar" id="card-avatar">👑</div>
+        </div>
+        <h4 class="font-semibold mb-1" id="card-name">Cosmic Emperor</h4>
+        <p class="text-sm text-gray-400 mb-2" id="card-title">Ruler of the Stars</p>
+        <div class="flex justify-between text-sm mb-2">
+            <span>XP: <span id="card-xp">5,247</span></span>
+            <span>Tokens: <span id="card-tokens">234</span></span>
+        </div>
+        <button class="join-event-btn" id="join-event-btn">
+            Join Live Event
+        </button>
+    </div>
+
+    <!-- Navigation -->
+    <div class="cosmic-nav">
+        <div class="nav-icon" data-page="discover">🔮</div>
+        <div class="nav-icon" data-page="connect">💬</div>
+        <div class="nav-icon" data-page="space">🌐</div>
+        <div class="nav-icon active" data-page="leaderboard">⚔️</div>
+        <div class="nav-icon" data-page="profile">🪙</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        
+        // Make THREE available globally for other scripts
+        window.THREE = THREE;
+        
+        // Global variables
+        let scene, camera, renderer, controls;
+        let stars = [];
+        let constellations = [];
+        let currentRegion = 'global';
+        let userData = {};
+        let raycaster, mouse;
+        let hoveredStar = null;
+
+        // Mock leaderboard data with unique contender avatars
+        const leaderboardData = {
+            global: [
+                { name: "Cosmic Entity", avatar: "🌌", title: "Ruler of the Stars", xp: 5247, tokens: 234, rank: 1, event: "Live Cosmic Challenge", rankTier: "global" },
+                { name: "Star Weaver", avatar: "⭐", title: "Master of Constellations", xp: 4987, tokens: 198, rank: 2, event: "Meditation Session", rankTier: "global" },
+                { name: "Nebula Sage", avatar: "🌌", title: "Guardian of the Cosmos", xp: 4756, tokens: 187, rank: 3, event: "Astral Projection Workshop", rankTier: "global" },
+                { name: "Crystal Oracle", avatar: "💎", title: "Seer of the Universe", xp: 4532, tokens: 176, rank: 4, event: "Crystal Healing Circle", rankTier: "global" },
+                { name: "Luna Mystic", avatar: "🌙", title: "Priestess of the Moon", xp: 4298, tokens: 165, rank: 5, event: "Lunar Ritual", rankTier: "global" },
+                { name: "Solar Flare", avatar: "☀️", title: "Warrior of Light", xp: 4067, tokens: 154, rank: 6, event: "Energy Work Session", rankTier: "global" },
+                { name: "Comet Rider", avatar: "☄️", title: "Traveler of Dimensions", xp: 3834, tokens: 143, rank: 7, event: "Cosmic Journey", rankTier: "global" },
+                { name: "Astral Walker", avatar: "🚀", title: "Explorer of Realms", xp: 3601, tokens: 132, rank: 8, event: "Dream Sharing Circle", rankTier: "global" }
+            ],
+            national: [
+                { name: "Star-Forger", avatar: "🔨", title: "American Cosmic Leader", xp: 3847, tokens: 167, rank: 1, event: "National Meditation", rankTier: "national" },
+                { name: "UK Mystic", avatar: "🇬🇧", title: "British Spiritual Guide", xp: 3621, tokens: 154, rank: 2, event: "Tea & Tarot", rankTier: "national" },
+                { name: "Canadian Aurora", avatar: "🇨🇦", title: "Northern Light Worker", xp: 3456, tokens: 143, rank: 3, event: "Aurora Watching", rankTier: "national" }
+            ],
+            state: [
+                { name: "Cluster Guardian", avatar: "🛡️", title: "Golden State Mystic", xp: 2156, tokens: 89, rank: 1, event: "Beach Meditation", rankTier: "state" },
+                { name: "New York Oracle", avatar: "🗽", title: "Empire State Seer", xp: 1987, tokens: 76, rank: 2, event: "City Stargazing", rankTier: "state" }
+            ],
+            city: [
+                { name: "Astral Tracer", avatar: "📍", title: "Bay Area Mystic", xp: 1247, tokens: 54, rank: 1, event: "Golden Gate Gathering", rankTier: "city" },
+                { name: "Oakland Oracle", avatar: "🌳", title: "East Bay Seer", xp: 1134, tokens: 48, rank: 2, event: "Park Meditation", rankTier: "city" }
+            ]
+        };
+
+        // Initialize page - this runs after THREE is imported as a module
+        function initPage() {
+            try {
+                console.log('=== START INITIALIZATION ===');
+                console.log('THREE.js available:', typeof THREE !== 'undefined');
+                console.log('THREE object:', THREE);
+                
+                const loadingEl = document.getElementById('loading-text');
+                console.log('Loading element:', loadingEl);
+                
+                loadingEl.textContent = 'Loading user data...';
+                loadUserData();
+                console.log('User data loaded');
+                
+                loadingEl.textContent = 'Initializing 3D scene...';
+                initialize3DScene();
+                console.log('3D scene initialized');
+                
+                loadingEl.textContent = 'Setting up event listeners...';
+                setupEventListeners();
+                console.log('Event listeners set up');
+                
+                loadingEl.textContent = 'Creating cosmic background...';
+                createCosmicBackground();
+                console.log('Cosmic background created');
+                
+                console.log('=== INITIALIZATION COMPLETE ===');
+            } catch (error) {
+                console.error('=== INITIALIZATION FAILED ===');
+                console.error('Error:', error);
+                console.error('Stack:', error.stack);
+                const loadingEl = document.getElementById('loading-text');
+                if (loadingEl) {
+                    loadingEl.textContent = 'Initialization failed: ' + error.message;
+                    loadingEl.style.color = '#ff6b6b';
+                }
+            }
+        }
+
+        // Start initialization with a small delay to ensure DOM is ready
+        setTimeout(initPage, 200);
+
+        function loadUserData() {
+            const savedData = localStorage.getItem('connectverse-user');
+            if (savedData) {
+                userData = JSON.parse(savedData);
+            }
+        }
+
+        function initialize3DScene() {
+            try {
+                console.log('Starting 3D scene initialization...');
+                const container = document.getElementById('constellation-3d');
+                
+                if (!container) {
+                    console.error('Container not found!');
+                    document.getElementById('loading-text').textContent = 'Error: Container not found';
+                    return;
+                }
+                
+                // Check if THREE.js is loaded
+                if (typeof THREE === 'undefined') {
+                    console.error('THREE.js not loaded!');
+                    document.getElementById('loading-text').textContent = 'Error loading 3D visualization';
+                    return;
+                }
+                
+                console.log('THREE.js loaded successfully');
+                
+                // Create scene
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x1a0b2e);
+
+                // Create camera
+                camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+                camera.position.z = 50;
+
+                // Create renderer
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                container.appendChild(renderer.domElement);
+
+                console.log('Renderer created and appended');
+
+                // Initialize raycaster for mouse interaction
+                raycaster = new THREE.Raycaster();
+                mouse = new THREE.Vector2();
+
+                // Create constellation
+                console.log('Creating constellation for region:', currentRegion);
+                createConstellation(currentRegion);
+
+                // Start animation loop
+                console.log('Starting animation loop');
+                animate();
+
+                // Hide loading text
+                document.getElementById('loading-text').style.display = 'none';
+                console.log('3D scene initialized successfully');
+
+                // Handle window resize
+                window.addEventListener('resize', onWindowResize);
+            } catch (error) {
+                console.error('Error initializing 3D scene:', error);
+                document.getElementById('loading-text').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function createConstellation(region) {
+            // Clear existing stars
+            stars.forEach(star => {
+                scene.remove(star);
+            });
+            stars = [];
+
+            const data = leaderboardData[region];
+            const starCount = data.length;
+
+            // Create stars for each user
+            data.forEach((user, index) => {
+                // Create star geometry based on rank
+                const size = Math.max(0.5, 3 - (index * 0.3));
+                
+                // Special styling for top contenders of each region
+                let material;
+                if (user.rank === 1) {
+                    // Top contender gets special material
+                    const colors = {
+                        'global': 0xffd700,
+                        'national': 0xff6b35,
+                        'state': 0x4a90e2,
+                        'city': 0x1abc9c
+                    };
+                    material = new THREE.MeshBasicMaterial({ 
+                        color: colors[user.rankTier] || 0x4a90e2,
+                        transparent: true,
+                        opacity: 0.9,
+                        emissive: colors[user.rankTier] || 0x4a90e2,
+                        emissiveIntensity: 0.3
+                    });
+                } else {
+                    // Regular users get standard colors
+                    const colors = [0xc0c0c0, 0xcd7f32, 0x4a90e2, 0xe91e63];
+                    const colorIndex = Math.min(index - 1, colors.length - 1);
+                    material = new THREE.MeshBasicMaterial({ 
+                        color: colors[colorIndex],
+                        transparent: true,
+                        opacity: 0.6
+                    });
+                }
+
+                const geometry = new THREE.SphereGeometry(size, 8, 8);
+                const star = new THREE.Mesh(geometry, material);
+
+                // Position stars in constellation pattern
+                const angle = (index / starCount) * Math.PI * 2;
+                const radius = 20 + (index * 2);
+                const height = (Math.random() - 0.5) * 10;
+                
+                star.position.x = Math.cos(angle) * radius;
+                star.position.y = Math.sin(angle) * radius + height;
+                star.position.z = (Math.random() - 0.5) * 20;
+
+                // Add user data to star
+                star.userData = user;
+
+                scene.add(star);
+                stars.push(star);
+
+                // Add connecting lines between nearby stars
+                if (index > 0) {
+                    const prevStar = stars[index - 1];
+                    const distance = star.position.distanceTo(prevStar.position);
+                    
+                    if (distance < 15) {
+                        const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                            star.position,
+                            prevStar.position
+                        ]);
+                        const lineMaterial = new THREE.LineBasicMaterial({ 
+                            color: 0x4a90e2, 
+                            transparent: true, 
+                            opacity: 0.3 
+                        });
+                        const line = new THREE.Line(lineGeometry, lineMaterial);
+                        scene.add(line);
+                    }
+                }
+            });
+
+            // Add particle effects
+            createParticleEffects();
+        }
+
+        function createParticleEffects() {
+            const particleCount = 100;
+            const particles = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 100;
+                positions[i + 1] = (Math.random() - 0.5) * 100;
+                positions[i + 2] = (Math.random() - 0.5) * 100;
+            }
+
+            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0x4a90e2,
+                size: 0.5,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            const particleSystem = new THREE.Points(particles, particleMaterial);
+            scene.add(particleSystem);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate stars slowly
+            stars.forEach((star, index) => {
+                star.rotation.x += 0.01;
+                star.rotation.y += 0.01;
+                
+                // Add subtle floating motion
+                star.position.y += Math.sin(Date.now() * 0.001 + index) * 0.01;
+            });
+
+            // Render scene
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('constellation-3d');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function setupEventListeners() {
+            // Region buttons
+            document.querySelectorAll('.region-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const region = this.dataset.region;
+                    switchRegion(region);
+                    
+                    // Update active button
+                    document.querySelectorAll('.region-button').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Zoom controls
+            document.getElementById('zoom-in').addEventListener('click', () => zoomCamera(-5));
+            document.getElementById('zoom-out').addEventListener('click', () => zoomCamera(5));
+            document.getElementById('reset-view').addEventListener('click', resetCamera);
+
+            // Mouse interaction
+            const container = document.getElementById('constellation-3d');
+            container.addEventListener('mousemove', onMouseMove);
+            container.addEventListener('click', onMouseClick);
+
+            // Navigation
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const page = this.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+
+            // Join event button
+            document.getElementById('join-event-btn').addEventListener('click', function() {
+                showNotification('Joining live event...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'events.html';
+                }, 1000);
+            });
+        }
+
+        function switchRegion(region) {
+            currentRegion = region;
+            createConstellation(region);
+            updateUserInfo(region);
+        }
+
+        function updateUserInfo(region) {
+            const data = leaderboardData[region];
+            const userRank = data.find(user => user.name.includes(userData.username)) || data[0];
+            
+            // Update user info panels
+            const rankElements = document.querySelectorAll('[id$="-user-rank"]');
+            const xpElements = document.querySelectorAll('[id$="-user-xp"]');
+            const tokenElements = document.querySelectorAll('[id$="-user-tokens"]');
+            const rankNumElements = document.querySelectorAll('[id$="-user-rank-num"]');
+            
+            rankElements.forEach(el => el.textContent = userRank.title);
+            xpElements.forEach(el => el.textContent = userRank.xp.toLocaleString());
+            tokenElements.forEach(el => el.textContent = userRank.tokens);
+            rankNumElements.forEach(el => el.textContent = `#${userRank.rank}`);
+        }
+
+        function zoomCamera(delta) {
+            camera.position.z += delta;
+            camera.position.z = Math.max(20, Math.min(100, camera.position.z));
+        }
+
+        function resetCamera() {
+            anime({
+                targets: camera.position,
+                x: 0,
+                y: 0,
+                z: 50,
+                duration: 1000,
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function onMouseMove(event) {
+            const rect = event.target.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            // Update raycaster
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(stars);
+
+            // Reset previous hover
+            if (hoveredStar) {
+                hoveredStar.scale.set(1, 1, 1);
+            }
+
+            // Handle new hover
+            if (intersects.length > 0) {
+                hoveredStar = intersects[0].object;
+                hoveredStar.scale.set(1.2, 1.2, 1.2);
+                event.target.style.cursor = 'pointer';
+            } else {
+                hoveredStar = null;
+                event.target.style.cursor = 'default';
+            }
+        }
+
+        function onMouseClick(event) {
+            if (hoveredStar) {
+                showUserCard(hoveredStar.userData, event);
+            }
+        }
+
+        function showUserCard(userData, event) {
+            const card = document.getElementById('user-card');
+            const rect = event.target.getBoundingClientRect();
+            
+            // Update card content
+            document.getElementById('card-name').textContent = userData.name;
+            document.getElementById('card-title').textContent = userData.title;
+            document.getElementById('card-xp').textContent = userData.xp.toLocaleString();
+            document.getElementById('card-tokens').textContent = userData.tokens;
+            
+            // Handle unique avatar for top contenders
+            const avatarContainer = document.getElementById('card-avatar-container');
+            const cardAvatar = document.getElementById('card-avatar');
+            
+            if (userData.rank === 1) {
+                // Top contender gets unique avatar
+                cardAvatar.style.display = 'none';
+                
+                // Create unique avatar based on rank tier
+                const uniqueAvatar = document.createElement('div');
+                uniqueAvatar.className = `avatar-${userData.rankTier}`;
+                uniqueAvatar.style.width = '60px';
+                uniqueAvatar.style.height = '60px';
+                uniqueAvatar.style.margin = '0 auto 0.5rem';
+                
+                // Remove any existing unique avatars
+                const existingUnique = avatarContainer.querySelector('[class*="avatar-"]');
+                if (existingUnique) {
+                    existingUnique.remove();
+                }
+                
+                avatarContainer.appendChild(uniqueAvatar);
+            } else {
+                // Regular user gets standard avatar
+                cardAvatar.style.display = 'flex';
+                cardAvatar.textContent = userData.avatar;
+                
+                // Remove any unique avatars
+                const existingUnique = avatarContainer.querySelector('[class*="avatar-"]');
+                if (existingUnique) {
+                    existingUnique.remove();
+                }
+            }
+            
+            // Position card
+            card.style.left = Math.min(rect.left + event.offsetX + 10, window.innerWidth - 220) + 'px';
+            card.style.top = Math.min(rect.top + event.offsetY + 10, window.innerHeight - 200) + 'px';
+            
+            // Show card
+            card.classList.add('show');
+            
+            // Hide card after delay
+            setTimeout(() => {
+                card.classList.remove('show');
+            }, 3000);
+        }
+
+        function createCosmicBackground() {
+            // Create animated cosmic background using p5.js
+            new p5((p) => {
+                p.setup = function() {
+                    const canvas = p.createCanvas(window.innerWidth, window.innerHeight);
+                    canvas.parent('cosmic-canvas');
+                    p.noFill();
+                };
+
+                p.draw = function() {
+                    p.clear();
+                    
+                    // Create nebula effect
+                    for (let i = 0; i < 5; i++) {
+                        p.stroke(74, 144, 226, 30);
+                        p.strokeWeight(2);
+                        p.beginShape();
+                        for (let x = 0; x < p.width; x += 10) {
+                            const y = p.height/2 + Math.sin(x * 0.01 + p.frameCount * 0.01 + i) * 50;
+                            p.vertex(x, y);
+                        }
+                        p.endShape();
+                    }
+                };
+
+                p.windowResized = function() {
+                    p.resizeCanvas(window.innerWidth, window.innerHeight);
+                };
+            });
+        }
+
+        function navigateToPage(page) {
+            // Update active nav icon
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            
+            // Animate navigation
+            anime({
+                targets: 'body',
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeInExpo',
+                complete: () => {
+                    window.location.href = `${page}.html`;
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg z-50 ${
+                type === 'error' ? 'bg-red-500' : 
+                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+            } text-white`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                opacity: [0, 1],
+                translateX: [100, 0],
+                duration: 300,
+                easing: 'easeOutExpo'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    opacity: [1, 0],
+                    translateX: [0, 100],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: () => notification.remove()
+                });
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

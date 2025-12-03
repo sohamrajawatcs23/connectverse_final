@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectVerse - Bond Chatroom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="main.js" defer></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/generative-ai": "https://esm.run/@google/generative-ai@0.21.0"
+      }
+    }
+    </script>
+    <style>
+        :root {
+            --cosmic-violet: #1a0b2e;
+            --cosmic-purple: #2d1b69;
+            --electric-blue: #4a90e2;
+            --stellar-pink: #e91e63;
+            --nebula-white: #f8f9fa;
+            --star-silver: #c0c0c0;
+            --void-black: #0a0a0a;
+            --aurora-gold: #ffd700;
+            --glow-blue: 0 0 20px rgba(74, 144, 226, 0.3);
+            --glow-white: 0 0 10px rgba(248, 249, 250, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--cosmic-violet), var(--cosmic-purple));
+            color: var(--nebula-white);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .chat-container {
+            background: rgba(45, 27, 105, 0.3);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            height: calc(100vh - 200px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(248, 249, 250, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .partner-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 18px;
+            position: relative;
+            animation: messageAppear 0.3s ease-out;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.sent {
+            background: linear-gradient(135deg, var(--electric-blue), rgba(74, 144, 226, 0.8));
+            color: white;
+            align-self: flex-end;
+            box-shadow: var(--glow-blue);
+        }
+
+        .message.received {
+            background: rgba(45, 27, 105, 0.6);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            color: var(--nebula-white);
+            align-self: flex-start;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid rgba(248, 249, 250, 0.1);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(45, 27, 105, 0.4);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 0.75rem 1.5rem;
+            color: var(--nebula-white);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+        }
+
+        .chat-input::placeholder {
+            color: var(--star-silver);
+        }
+
+        .floating-button {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(45, 27, 105, 0.8);
+            border: 1px solid rgba(248, 249, 250, 0.3);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.5rem;
+        }
+
+        .floating-button:hover {
+            background: rgba(74, 144, 226, 0.3);
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+            transform: scale(1.1);
+        }
+
+        .floating-button.active {
+            background: var(--electric-blue);
+            color: var(--void-black);
+            box-shadow: var(--glow-blue);
+        }
+
+        .bond-button {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--aurora-gold), #ff6b35);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            color: var(--void-black);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            animation: pulseBond 2s infinite;
+        }
+
+        @keyframes pulseBond {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+                transform: translateX(-50%) scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+                transform: translateX(-50%) scale(1.05);
+            }
+        }
+
+        .bond-button.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .reaction-orb {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(74, 144, 226, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            pointer-events: none;
+            animation: floatUp 3s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(45, 27, 105, 0.6);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            border-radius: 18px;
+            align-self: flex-start;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .typing-indicator.show {
+            opacity: 1;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--star-silver);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .cosmic-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 50px;
+            padding: 12px 24px;
+            display: flex;
+            gap: 20px;
+            z-index: 50;
+        }
+
+        .nav-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(45, 27, 105, 0.5);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .nav-icon:hover {
+            background: rgba(74, 144, 226, 0.3);
+            border-color: var(--electric-blue);
+            transform: scale(1.1);
+        }
+
+        .nav-icon.active {
+            background: var(--electric-blue);
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+        }
+
+        .bond-ceremony {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .bond-ceremony.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .bond-rings {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+
+        .ring {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 4px solid var(--aurora-gold);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: orbit 3s linear infinite;
+        }
+
+        .ring:nth-child(1) {
+            animation-delay: -1.5s;
+        }
+
+        @keyframes orbit {
+            0% { transform: translate(-50%, -50%) rotate(0deg) translateX(60px) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg) translateX(60px) rotate(-360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .floating-button {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .chat-container {
+                height: calc(100vh - 150px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Chat Container -->
+    <div class="p-4 h-full">
+        <div class="chat-container mx-auto max-w-4xl">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="partner-avatar" id="partner-avatar">🌟</div>
+                <div class="flex-1">
+                    <h3 class="font-semibold" id="partner-name">Cosmic Explorer</h3>
+                    <p class="text-sm text-gray-400">Bonding in progress...</p>
+                </div>
+                <div id="ai-status" class="text-xs px-2 py-1 rounded" style="background: rgba(74, 144, 226, 0.2); color: var(--electric-blue);">
+                    🤖 AI Active
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be added here dynamically -->
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <span class="text-sm text-gray-400 ml-2">Typing...</span>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="chat-input"
+                    placeholder="Type your cosmic message..."
+                    maxlength="500"
+                >
+                <button class="floating-button" style="position: relative;" id="send-btn">
+                    🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Buttons -->
+    <div class="floating-button" style="top: 100px; right: 20px;" id="voice-btn" title="Voice Call">
+        🎙️
+    </div>
+    <div class="floating-button" style="top: 170px; right: 20px;" id="video-btn" title="Video Call">
+        🎥
+    </div>
+    <div class="floating-button" style="top: 240px; right: 20px;" id="heart-btn" title="Send Bond Request">
+        ❤️
+    </div>
+    <div class="floating-button" style="top: 310px; right: 20px;" id="shield-btn" title="Report/Block">
+        🛡️
+    </div>
+
+    <!-- Bond Button -->
+    <button class="bond-button" id="bond-btn">
+        ✨ Form Cosmic Bond ✨
+    </button>
+
+    <!-- Bond Ceremony Overlay -->
+    <div class="bond-ceremony" id="bond-ceremony">
+        <div class="text-center">
+            <h2 class="text-4xl font-bold mb-8" style="font-family: 'Orbitron', monospace;">Cosmic Bond Formed!</h2>
+            <div class="bond-rings">
+                <div class="ring"></div>
+                <div class="ring"></div>
+            </div>
+            <p class="text-xl mt-8 mb-4">Your souls are now connected across the universe</p>
+            <button class="floating-button" style="position: relative; margin: 0 auto;" id="create-space-btn">
+                Create Tune Space Together
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="cosmic-nav">
+        <div class="nav-icon" data-page="discover">🔮</div>
+        <div class="nav-icon active" data-page="connect">💬</div>
+        <div class="nav-icon" data-page="space">🌐</div>
+        <div class="nav-icon" data-page="leaderboard">⚔️</div>
+        <div class="nav-icon" data-page="profile">🪙</div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+        
+        // ========================================
+        // GEMINI API CONFIGURATION
+        // ========================================
+        // TO ENABLE AI CHAT:
+        // 1. Get your free API key from: https://makersuite.google.com/app/apikey
+        // 2. Replace 'YOUR_GEMINI_API_KEY_HERE' below with your actual API key
+        // 3. Refresh the page
+        // 
+        // Example: const API_KEY = 'AIzaSyC1234567890abcdefghijklmnopqrstuv';
+        // ========================================
+        
+        const API_KEY = 'AIzaSyCbWs75EuQf_WTdLQfPIgUcJBx-QNkGi8E'; // Replace with your actual API key
+        
+        // Initialize Gemini AI
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+        // Chat history for context
+        let chatHistory = [];
+        
+        // System prompt to set the AI's personality
+        const systemPrompt = `You are a cosmic, spiritual companion in ConnectVerse, a platform for deep connections. 
+        Your personality is warm, empathetic, and mystical. You believe in cosmic connections, astrology, crystals, 
+        and spiritual energy. Keep responses concise (1-3 sentences), engaging, and aligned with themes of:
+        - Cosmic connections and destiny
+        - Spiritual growth and meditation
+        - Astrology and zodiac signs
+        - Crystal healing and energy
+        - Dreams and astral experiences
+        - Deep emotional connections
+        Be friendly, supportive, and create meaningful conversations. Avoid being too formal.`;
+
+        // Global state
+        let messages = [];
+        let isTyping = false;
+        let messageCount = 0;
+        let bondTimer = null;
+        let userData = {};
+        let partnerData = {};
+        let bondFormed = false;
+        let isAIResponding = false;
+
+        // Mock conversation starters
+        const conversationStarters = [
+            "What's your favorite cosmic experience?",
+            "Do you believe in parallel universes?",
+            "What's your zodiac sign and do you feel connected to it?",
+            "Have you ever had a lucid dream about space?",
+            "What crystal resonates with your energy the most?",
+            "Do you practice meditation under the stars?",
+            "What's your thoughts on astral projection?",
+            "Have you ever felt a deep connection with someone you've just met?",
+            "What does your ideal cosmic journey look like?",
+            "Do you believe our souls travel between dimensions?"
+        ];
+
+        // Mock responses
+        const mockResponses = [
+            "That's fascinating! I feel the same way about cosmic connections.",
+            "Your energy resonates deeply with mine. Tell me more!",
+            "I believe the universe brought us together for a reason.",
+            "Your thoughts on this are so aligned with my own experiences.",
+            "I can feel the cosmic energy flowing between us right now.",
+            "This conversation feels like destiny unfolding.",
+            "Your soul speaks the same language as mine.",
+            "I'm getting goosebumps - this connection is real.",
+            "The stars must have aligned for us to meet like this.",
+            "I feel like I've known you across multiple lifetimes."
+        ];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAPIStatus();
+            loadUserData();
+            setupEventListeners();
+            initializeChat();
+            startBondTimer();
+        });
+
+        function checkAPIStatus() {
+            const statusEl = document.getElementById('ai-status');
+            if (!API_KEY || API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+                statusEl.innerHTML = '⚠️ Mock Mode';
+                statusEl.style.background = 'rgba(255, 193, 7, 0.2)';
+                statusEl.style.color = '#ffc107';
+                statusEl.title = 'Add your Gemini API key in the script to enable AI chat';
+                console.warn('⚠️ Gemini API key not configured. Using mock responses.\n\nTo enable AI chat:\n1. Get your API key from: https://makersuite.google.com/app/apikey\n2. Replace "YOUR_GEMINI_API_KEY_HERE" in the script with your actual key');
+            } else {
+                statusEl.innerHTML = '🤖 AI Active';
+                statusEl.style.background = 'rgba(74, 144, 226, 0.2)';
+                statusEl.style.color = 'var(--electric-blue)';
+                statusEl.title = 'Powered by Google Gemini AI';
+            }
+        }
+
+        function loadUserData() {
+            // Load user data
+            const savedUserData = localStorage.getItem('connectverse-user');
+            if (savedUserData) {
+                userData = JSON.parse(savedUserData);
+            }
+
+            // Load connection data
+            const connectionData = localStorage.getItem('connectverse-connection');
+            if (connectionData) {
+                partnerData = JSON.parse(connectionData).partner;
+                updatePartnerDisplay();
+            }
+        }
+
+        function updatePartnerDisplay() {
+            document.getElementById('partner-avatar').textContent = partnerData.avatar;
+            document.getElementById('partner-name').textContent = partnerData.name;
+            
+            // Update background based on combined auras
+            updateDualAuraBackground(userData.mood, partnerData.aura);
+        }
+
+        function updateDualAuraBackground(userMood, partnerAura) {
+            // Create a blend of both users' mood colors
+            const moodColors = {
+                cosmic: ['#1a0b2e', '#2d1b69'],
+                mystical: ['#2d1b69', '#4a1496'],
+                vibrant: ['#1a0b2e', '#2ecc71'],
+                intense: ['#1a0b2e', '#e74c3c'],
+                serene: ['#1a0b2e', '#1abc9c']
+            };
+            
+            const userColors = moodColors[userMood] || moodColors.cosmic;
+            const partnerColors = moodColors[partnerAura] || moodColors.cosmic;
+            
+            // Blend the gradients
+            document.body.style.background = `linear-gradient(135deg, ${userColors[0]}, ${partnerColors[1]})`;
+        }
+
+        function setupEventListeners() {
+            // Chat input
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            
+            sendBtn.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            // Floating buttons
+            document.getElementById('voice-btn').addEventListener('click', toggleVoiceCall);
+            document.getElementById('video-btn').addEventListener('click', toggleVideoCall);
+            document.getElementById('heart-btn').addEventListener('click', sendBondRequest);
+            document.getElementById('shield-btn').addEventListener('click', reportUser);
+
+            // Bond button
+            document.getElementById('bond-btn').addEventListener('click', formBond);
+
+            // Bond ceremony
+            document.getElementById('create-space-btn').addEventListener('click', createTuneSpace);
+
+            // Navigation
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const page = this.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+
+            // Simulate partner typing
+            setInterval(simulatePartnerTyping, 15000);
+        }
+
+        async function initializeChat() {
+            // Add welcome message
+            setTimeout(() => {
+                addMessage("Welcome to your cosmic connection! The universe has brought you together. ✨", 'received');
+                
+                // Add AI-generated conversation starter after a delay
+                setTimeout(async () => {
+                    if (API_KEY && API_KEY !== 'YOUR_GEMINI_API_KEY_HERE') {
+                        try {
+                            showTypingIndicator();
+                            
+                            const chat = model.startChat({
+                                history: [
+                                    {
+                                        role: "user",
+                                        parts: [{ text: systemPrompt }]
+                                    },
+                                    {
+                                        role: "model",
+                                        parts: [{ text: "I understand! I'll be your cosmic companion." }]
+                                    }
+                                ],
+                                generationConfig: {
+                                    temperature: 0.9,
+                                    maxOutputTokens: 100,
+                                },
+                            });
+                            
+                            const result = await chat.sendMessage("Start our conversation with an engaging cosmic question or greeting");
+                            const response = await result.response;
+                            const aiMessage = response.text();
+                            
+                            hideTypingIndicator();
+                            addMessage(aiMessage, 'received');
+                        } catch (error) {
+                            console.error('Error initializing AI chat:', error);
+                            hideTypingIndicator();
+                            const starter = conversationStarters[Math.floor(Math.random() * conversationStarters.length)];
+                            addMessage(starter, 'received');
+                        }
+                    } else {
+                        const starter = conversationStarters[Math.floor(Math.random() * conversationStarters.length)];
+                        addMessage(starter, 'received');
+                    }
+                }, 2000);
+            }, 1000);
+        }
+
+        function startBondTimer() {
+            // Show bond button after 3 minutes of interaction
+            bondTimer = setTimeout(() => {
+                if (messageCount >= 5) { // Show if at least 5 messages exchanged
+                    showBondButton();
+                } else {
+                    // Check again later
+                    startBondTimer();
+                }
+            }, 180000); // 3 minutes
+        }
+
+        function showBondButton() {
+            const bondBtn = document.getElementById('bond-btn');
+            bondBtn.classList.add('show');
+            
+            anime({
+                targets: bondBtn,
+                scale: [0, 1],
+                opacity: [0, 1],
+                duration: 800,
+                easing: 'easeOutElastic(1, .8)'
+            });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message || isAIResponding) return;
+            
+            // Add user message
+            addMessage(message, 'sent');
+            input.value = '';
+            messageCount++;
+            
+            // Get AI response
+            isAIResponding = true;
+            setTimeout(() => {
+                showTypingIndicator();
+                getAIResponse(message);
+            }, 1000);
+        }
+
+        async function getAIResponse(userMessage) {
+            try {
+                // Create chat session with history
+                const chat = model.startChat({
+                    history: [
+                        {
+                            role: "user",
+                            parts: [{ text: systemPrompt }]
+                        },
+                        {
+                            role: "model",
+                            parts: [{ text: "I understand! I'll be your cosmic companion, bringing warmth, mysticism, and spiritual insight to our connection. Let's explore the universe together! ✨" }]
+                        },
+                        ...chatHistory
+                    ],
+                    generationConfig: {
+                        temperature: 0.9,
+                        maxOutputTokens: 150,
+                    },
+                });
+
+                // Send message and get response
+                console.log('Sending message to AI:', userMessage);
+                const result = await chat.sendMessage(userMessage);
+                console.log('Got result:', result);
+                
+                const response = await result.response;
+                console.log('Got response:', response);
+                
+                const aiMessage = response.text();
+                console.log('AI message:', aiMessage);
+
+                if (!aiMessage || aiMessage.trim() === '') {
+                    throw new Error('Empty response from AI');
+                }
+
+                // Add to chat history
+                chatHistory.push({
+                    role: "user",
+                    parts: [{ text: userMessage }]
+                });
+                chatHistory.push({
+                    role: "model",
+                    parts: [{ text: aiMessage }]
+                });
+
+                // Keep chat history manageable (last 10 exchanges)
+                if (chatHistory.length > 20) {
+                    chatHistory = chatHistory.slice(-20);
+                }
+
+                hideTypingIndicator();
+                addMessage(aiMessage, 'received');
+                messageCount++;
+                isAIResponding = false;
+
+            } catch (error) {
+                console.error('Error getting AI response:', error);
+                hideTypingIndicator();
+                
+                // Fallback to mock response
+                const response = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+                addMessage(response, 'received');
+                messageCount++;
+                isAIResponding = false;
+                
+                // Show error notification
+                showNotification('Using fallback responses. Check your API key.', 'warning');
+            }
+        }
+
+        function addMessage(text, type) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            
+            messageDiv.className = `message ${type}`;
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <div>${text}</div>
+                <div class="message-time">${timeString}</div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            // Animate message appearance
+            anime({
+                targets: messageDiv,
+                opacity: [0, 1],
+                translateY: [20, 0],
+                duration: 300,
+                easing: 'easeOutExpo'
+            });
+            
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Store message
+            messages.push({
+                text: text,
+                type: type,
+                timestamp: Date.now()
+            });
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.classList.add('show');
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.classList.remove('show');
+        }
+
+        async function simulatePartnerTyping() {
+            // Only simulate if user hasn't sent a message recently and AI is not responding
+            if (Math.random() > 0.5 || isAIResponding) return; // 50% chance to type
+            
+            showTypingIndicator();
+            
+            // Use AI to generate spontaneous message if API key is set
+            if (API_KEY && API_KEY !== 'YOUR_GEMINI_API_KEY_HERE' && Math.random() > 0.5) {
+                try {
+                    const topics = [
+                        "Share a cosmic insight or spiritual thought",
+                        "Ask about their day in a mystical way",
+                        "Share an interesting fact about astrology or crystals",
+                        "Express feeling the connection between us"
+                    ];
+                    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+                    
+                    const chat = model.startChat({
+                        history: [
+                            {
+                                role: "user",
+                                parts: [{ text: systemPrompt }]
+                            },
+                            {
+                                role: "model",
+                                parts: [{ text: "I understand!" }]
+                            },
+                            ...chatHistory.slice(-6)
+                        ],
+                        generationConfig: {
+                            temperature: 0.9,
+                            maxOutputTokens: 100,
+                        },
+                    });
+
+                    const result = await chat.sendMessage(randomTopic);
+                    const response = await result.response;
+                    const aiMessage = response.text();
+                    
+                    hideTypingIndicator();
+                    addMessage(aiMessage, 'received');
+                    messageCount++;
+                    
+                    // Add to history
+                    chatHistory.push({
+                        role: "model",
+                        parts: [{ text: aiMessage }]
+                    });
+                } catch (error) {
+                    hideTypingIndicator();
+                    const response = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+                    addMessage(response, 'received');
+                    messageCount++;
+                }
+            } else {
+                // Fallback to mock response
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    const response = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+                    addMessage(response, 'received');
+                    messageCount++;
+                }, 3000);
+            }
+        }
+
+        // WebRTC Video/Voice Configuration
+        let localStream = null;
+        let remoteStream = null;
+        let peerConnection = null;
+        let isVoiceCallActive = false;
+        let isVideoCallActive = false;
+        
+        // Speech recognition and synthesis for AI voice calls
+        let recognition = null;
+        let speechSynthesis = window.speechSynthesis;
+        let isAISpeaking = false;
+
+        async function toggleVoiceCall() {
+            const btn = document.getElementById('voice-btn');
+            
+            if (!isVoiceCallActive) {
+                try {
+                    // Request microphone access
+                    localStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: true, 
+                        video: false 
+                    });
+                    
+                    // Initialize speech recognition
+                    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                        recognition = new SpeechRecognition();
+                        recognition.continuous = false; // Changed to false for better reliability
+                        recognition.interimResults = true; // Show interim results
+                        recognition.lang = 'en-US';
+                        recognition.maxAlternatives = 1;
+                        
+                        recognition.onstart = () => {
+                            console.log('Voice recognition started');
+                            showNotification('🎙️ Listening... Speak now!', 'info');
+                        };
+                        
+                        recognition.onresult = async (event) => {
+                            console.log('Recognition result event:', event);
+                            
+                            // Get the most recent result
+                            const lastResult = event.results[event.results.length - 1];
+                            const transcript = lastResult[0].transcript.trim();
+                            const isFinal = lastResult.isFinal;
+                            
+                            console.log('Transcript:', transcript, 'isFinal:', isFinal);
+                            
+                            if (isFinal && transcript.length > 0) {
+                                console.log('User said:', transcript);
+                                
+                                // Display user's spoken message
+                                addMessage(transcript, 'sent');
+                                
+                                // Get AI response
+                                await getVoiceAIResponse(transcript);
+                            } else if (!isFinal) {
+                                // Show interim results in console
+                                console.log('Interim:', transcript);
+                            }
+                        };
+                        
+                        recognition.onspeechstart = () => {
+                            console.log('Speech detected');
+                            showNotification('🎤 Speech detected...', 'info');
+                        };
+                        
+                        recognition.onspeechend = () => {
+                            console.log('Speech ended');
+                        };
+                        
+                        recognition.onaudiostart = () => {
+                            console.log('Audio capturing started');
+                        };
+                        
+                        recognition.onaudioend = () => {
+                            console.log('Audio capturing ended');
+                        };
+                        
+                        recognition.onerror = (event) => {
+                            console.error('Speech recognition error:', event.error, event);
+                            if (event.error === 'no-speech') {
+                                showNotification('⚠️ No speech detected. Try again!', 'warning');
+                            } else if (event.error === 'audio-capture') {
+                                showNotification('⚠️ Microphone error', 'error');
+                            } else if (event.error === 'not-allowed') {
+                                showNotification('⚠️ Microphone permission denied', 'error');
+                            } else {
+                                showNotification(`⚠️ ${event.error}`, 'error');
+                            }
+                            
+                            // Restart after error if still active
+                            if (isVoiceCallActive && !isAISpeaking) {
+                                setTimeout(() => {
+                                    if (recognition && isVoiceCallActive) {
+                                        recognition.start();
+                                    }
+                                }, 1000);
+                            }
+                        };
+                        
+                        recognition.onend = () => {
+                            console.log('Recognition ended');
+                            // Restart if still active
+                            if (isVoiceCallActive && !isAISpeaking) {
+                                setTimeout(() => {
+                                    if (recognition) {
+                                        console.log('Restarting recognition...');
+                                        try {
+                                            recognition.start();
+                                        } catch (e) {
+                                            console.error('Error restarting recognition:', e);
+                                        }
+                                    }
+                                }, 500);
+                            }
+                        };
+                        
+                        try {
+                            recognition.start();
+                            console.log('Recognition started successfully');
+                        } catch (e) {
+                            console.error('Error starting recognition:', e);
+                            throw e;
+                        }
+                    } else {
+                        throw new Error('Speech recognition not supported');
+                    }
+                    
+                    btn.classList.add('active');
+                    isVoiceCallActive = true;
+                    showNotification('🎙️ AI Voice call started - Speak now!', 'success');
+                    
+                    console.log('Voice call started with stream:', localStream);
+                } catch (error) {
+                    console.error('Error accessing microphone:', error);
+                    showNotification('⚠️ ' + error.message, 'error');
+                }
+            } else {
+                // Stop voice call
+                if (recognition) {
+                    recognition.stop();
+                    recognition = null;
+                }
+                
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                    localStream = null;
+                }
+                
+                // Stop any ongoing speech
+                speechSynthesis.cancel();
+                isAISpeaking = false;
+                
+                btn.classList.remove('active');
+                isVoiceCallActive = false;
+                showNotification('🎙️ AI Voice call ended', 'info');
+            }
+            
+            // Animate button
+            anime({
+                targets: btn,
+                scale: [1, 1.2, 1],
+                duration: 300,
+                easing: 'easeOutElastic(1, .8)'
+            });
+        }
+        
+        async function getVoiceAIResponse(userMessage) {
+            isAISpeaking = true;
+            
+            // Pause recognition while AI is speaking
+            if (recognition) {
+                recognition.stop();
+            }
+            
+            showTypingIndicator();
+            
+            try {
+                const genAI = new GoogleGenerativeAI(API_KEY);
+                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+                
+                const chat = model.startChat({
+                    history: [
+                        {
+                            role: "user",
+                            parts: [{ text: "You are a friendly cosmic AI assistant having a voice conversation. Keep responses concise (2-3 sentences) and conversational." }],
+                        },
+                        {
+                            role: "model",
+                            parts: [{ text: "Hello! I'm your cosmic companion, ready to chat about anything across the universe. What's on your mind?" }],
+                        },
+                        ...chatHistory.slice(-6)
+                    ],
+                    generationConfig: {
+                        temperature: 0.9,
+                        maxOutputTokens: 150,
+                    },
+                });
+
+                const result = await chat.sendMessage(userMessage);
+                const response = await result.response;
+                const aiMessage = response.text();
+                
+                hideTypingIndicator();
+                addMessage(aiMessage, 'received');
+                
+                // Add to history
+                chatHistory.push(
+                    { role: "user", parts: [{ text: userMessage }] },
+                    { role: "model", parts: [{ text: aiMessage }] }
+                );
+                
+                // Speak the AI response
+                speakText(aiMessage);
+                
+            } catch (error) {
+                console.error('AI Voice Error:', error);
+                hideTypingIndicator();
+                const fallback = "I'm having trouble connecting right now. Could you try again?";
+                addMessage(fallback, 'received');
+                speakText(fallback);
+            }
+        }
+        
+        function speakText(text) {
+            // Stop any ongoing speech
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.1;
+            utterance.volume = 1.0;
+            
+            // Try to use a more natural voice
+            const voices = speechSynthesis.getVoices();
+            const preferredVoice = voices.find(voice => 
+                voice.name.includes('Google') || 
+                voice.name.includes('Microsoft') ||
+                voice.name.includes('Samantha') ||
+                voice.lang.startsWith('en')
+            );
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+            
+            utterance.onstart = () => {
+                console.log('AI started speaking');
+                showNotification('🔊 AI is speaking...', 'info');
+            };
+            
+            utterance.onend = () => {
+                console.log('AI finished speaking');
+                isAISpeaking = false;
+                // Resume listening
+                if (isVoiceCallActive && recognition) {
+                    setTimeout(() => {
+                        recognition.start();
+                    }, 500);
+                }
+            };
+            
+            utterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event);
+                isAISpeaking = false;
+                if (isVoiceCallActive && recognition) {
+                    recognition.start();
+                }
+            };
+            
+            speechSynthesis.speak(utterance);
+        }
+
+        async function toggleVideoCall() {
+            const btn = document.getElementById('video-btn');
+            
+            if (!isVideoCallActive) {
+                try {
+                    // Request camera and microphone access
+                    localStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: true, 
+                        video: {
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            facingMode: 'user'
+                        }
+                    });
+                    
+                    // Create video display overlay
+                    createVideoOverlay(localStream);
+                    
+                    btn.classList.add('active');
+                    isVideoCallActive = true;
+                    showNotification('🎥 Video call started', 'success');
+                    
+                    console.log('Video call started with stream:', localStream);
+                } catch (error) {
+                    console.error('Error accessing camera:', error);
+                    showNotification('⚠️ Camera access denied', 'error');
+                }
+            } else {
+                // Stop video call
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                    localStream = null;
+                }
+                
+                // Remove video overlay
+                removeVideoOverlay();
+                
+                btn.classList.remove('active');
+                isVideoCallActive = false;
+                showNotification('🎥 Video call ended', 'info');
+            }
+            
+            // Animate button
+            anime({
+                targets: btn,
+                scale: [1, 1.2, 1],
+                duration: 300,
+                easing: 'easeOutElastic(1, .8)'
+            });
+        }
+
+        function createVideoOverlay(stream) {
+            // Create video overlay container
+            const overlay = document.createElement('div');
+            overlay.id = 'video-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                width: 300px;
+                height: 225px;
+                background: rgba(26, 11, 46, 0.9);
+                border: 2px solid rgba(74, 144, 226, 0.5);
+                border-radius: 20px;
+                overflow: hidden;
+                z-index: 100;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                cursor: move;
+            `;
+            
+            // Create video element
+            const video = document.createElement('video');
+            video.id = 'local-video';
+            video.autoplay = true;
+            video.muted = true;
+            video.playsInline = true;
+            video.srcObject = stream;
+            video.style.cssText = `
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                pointer-events: none;
+            `;
+            
+            // Create label
+            const label = document.createElement('div');
+            label.style.cssText = `
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 12px;
+                font-weight: 600;
+                pointer-events: none;
+            `;
+            label.textContent = 'You';
+            
+            overlay.appendChild(video);
+            overlay.appendChild(label);
+            document.body.appendChild(overlay);
+            
+            // Make overlay draggable
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            overlay.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+            
+            // Touch support for mobile
+            overlay.addEventListener('touchstart', dragStart);
+            document.addEventListener('touchmove', drag);
+            document.addEventListener('touchend', dragEnd);
+
+            function dragStart(e) {
+                if (e.type === 'touchstart') {
+                    initialX = e.touches[0].clientX - xOffset;
+                    initialY = e.touches[0].clientY - yOffset;
+                } else {
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                }
+
+                if (e.target === overlay) {
+                    isDragging = true;
+                    overlay.style.transition = 'none';
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    
+                    if (e.type === 'touchmove') {
+                        currentX = e.touches[0].clientX - initialX;
+                        currentY = e.touches[0].clientY - initialY;
+                    } else {
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                    }
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    // Constrain to viewport
+                    const rect = overlay.getBoundingClientRect();
+                    const maxX = window.innerWidth - rect.width;
+                    const maxY = window.innerHeight - rect.height;
+                    
+                    xOffset = Math.max(-rect.left, Math.min(xOffset, maxX - rect.left));
+                    yOffset = Math.max(-rect.top, Math.min(yOffset, maxY - rect.top));
+
+                    setTranslate(xOffset, yOffset, overlay);
+                }
+            }
+
+            function dragEnd(e) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+
+            function setTranslate(xPos, yPos, el) {
+                el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+            }
+            
+            // Animate overlay appearance
+            anime({
+                targets: overlay,
+                opacity: [0, 1],
+                scale: [0.5, 1],
+                duration: 500,
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function removeVideoOverlay() {
+            const overlay = document.getElementById('video-overlay');
+            if (overlay) {
+                anime({
+                    targets: overlay,
+                    opacity: [1, 0],
+                    scale: [1, 0.5],
+                    translateY: [0, -20],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: () => overlay.remove()
+                });
+            }
+        }
+
+        function sendBondRequest() {
+            const btn = document.getElementById('heart-btn');
+            
+            // Animate heart
+            anime({
+                targets: btn,
+                scale: [1, 1.5, 1],
+                duration: 600,
+                easing: 'easeOutElastic(1, .8)'
+            });
+            
+            // Create floating heart reaction
+            createReaction(btn, '❤️');
+            
+            showNotification('Bond request sent!', 'success');
+            
+            // Maybe show bond button earlier
+            if (messageCount >= 3) {
+                showBondButton();
+            }
+        }
+
+        function createReaction(element, emoji) {
+            const rect = element.getBoundingClientRect();
+            const reaction = document.createElement('div');
+            reaction.className = 'reaction-orb';
+            reaction.textContent = emoji;
+            reaction.style.left = rect.left + 'px';
+            reaction.style.top = rect.top + 'px';
+            
+            document.body.appendChild(reaction);
+            
+            setTimeout(() => {
+                reaction.remove();
+            }, 3000);
+        }
+
+        function reportUser() {
+            if (confirm('Are you sure you want to report this user?')) {
+                showNotification('User reported successfully', 'success');
+                
+                // Return to discover page
+                setTimeout(() => {
+                    window.location.href = 'discover.html';
+                }, 2000);
+            }
+        }
+
+        function formBond() {
+            if (bondFormed) return;
+            
+            bondFormed = true;
+            
+            // Show bond ceremony
+            const ceremony = document.getElementById('bond-ceremony');
+            ceremony.classList.add('show');
+            
+            // Animate ceremony appearance
+            anime({
+                targets: ceremony,
+                opacity: [0, 1],
+                duration: 1000,
+                easing: 'easeOutExpo'
+            });
+            
+            // Animate rings
+            anime({
+                targets: '.ring',
+                rotate: [0, 360],
+                duration: 3000,
+                easing: 'linear',
+                loop: true
+            });
+            
+            // Save bond data
+            const bondData = {
+                user: userData,
+                partner: partnerData,
+                messages: messages,
+                timestamp: Date.now(),
+                bondType: 'cosmic'
+            };
+            
+            localStorage.setItem('connectverse-bond', JSON.stringify(bondData));
+        }
+
+        function createTuneSpace() {
+            // Animate transition
+            anime({
+                targets: '#bond-ceremony',
+                opacity: [1, 0],
+                duration: 500,
+                easing: 'easeInExpo',
+                complete: () => {
+                    window.location.href = 'space.html';
+                }
+            });
+        }
+
+        function navigateToPage(page) {
+            // Update active nav icon
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            
+            // Animate navigation
+            anime({
+                targets: 'body',
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeInExpo',
+                complete: () => {
+                    window.location.href = `${page}.html`;
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg z-50 ${
+                type === 'error' ? 'bg-red-500' : 
+                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+            } text-white`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                opacity: [0, 1],
+                translateX: [100, 0],
+                duration: 300,
+                easing: 'easeOutExpo'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    opacity: [1, 0],
+                    translateX: [0, 100],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: () => notification.remove()
+                });
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

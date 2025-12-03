@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectVerse - Profile Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.0/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="main.js" defer></script>
+    <style>
+        :root {
+            --cosmic-violet: #1a0b2e;
+            --cosmic-purple: #2d1b69;
+            --electric-blue: #4a90e2;
+            --stellar-pink: #e91e63;
+            --nebula-white: #f8f9fa;
+            --star-silver: #c0c0c0;
+            --void-black: #0a0a0a;
+            --aurora-gold: #ffd700;
+            --glow-blue: 0 0 20px rgba(74, 144, 226, 0.3);
+            --glow-white: 0 0 10px rgba(248, 249, 250, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--cosmic-violet), var(--cosmic-purple));
+            color: var(--nebula-white);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .profile-center {
+            background: rgba(45, 27, 105, 0.3);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 2rem;
+        }
+
+        .main-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .main-avatar:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: var(--glow-blue);
+        }
+
+        .xp-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 8px solid transparent;
+            background: conic-gradient(from 0deg, var(--aurora-gold) 0deg, var(--aurora-gold) 240deg, rgba(255, 215, 0, 0.2) 240deg, rgba(255, 215, 0, 0.2) 360deg);
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .aura-effect {
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            width: 190px;
+            height: 190px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(74, 144, 226, 0.3) 0%, transparent 70%);
+            animation: auraPulse 3s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes auraPulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .user-name {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, var(--nebula-white), var(--aurora-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-title {
+            font-size: 1rem;
+            color: var(--star-silver);
+            margin-bottom: 1rem;
+        }
+
+        .user-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(26, 11, 46, 0.6);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--aurora-gold);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--star-silver);
+            text-transform: uppercase;
+        }
+
+        .tab-container {
+            background: rgba(45, 27, 105, 0.3);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            background: rgba(74, 144, 226, 0.2);
+            border: 1px solid var(--electric-blue);
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            color: var(--nebula-white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            white-space: nowrap;
+            min-width: fit-content;
+        }
+
+        .tab-button:hover {
+            background: rgba(74, 144, 226, 0.4);
+            box-shadow: var(--glow-blue);
+        }
+
+        .tab-button.active {
+            background: var(--electric-blue);
+            color: var(--void-black);
+            box-shadow: var(--glow-blue);
+        }
+
+        .tab-content {
+            min-height: 300px;
+        }
+
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .achievement-card {
+            background: rgba(26, 11, 46, 0.6);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .achievement-card.unlocked {
+            border-color: var(--aurora-gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .achievement-card.locked {
+            opacity: 0.5;
+            filter: grayscale(1);
+        }
+
+        .achievement-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .achievement-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .achievement-description {
+            font-size: 0.9rem;
+            color: var(--star-silver);
+        }
+
+        .wallet-card {
+            background: rgba(26, 11, 46, 0.6);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .balance-display {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .balance-amount {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--aurora-gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .balance-label {
+            font-size: 1rem;
+            color: var(--star-silver);
+        }
+
+        .transaction-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(248, 249, 250, 0.1);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+
+        .transaction-details {
+            flex: 1;
+        }
+
+        .transaction-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .transaction-time {
+            font-size: 0.8rem;
+            color: var(--star-silver);
+        }
+
+        .transaction-amount {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            color: var(--aurora-gold);
+        }
+
+        .settings-section {
+            background: rgba(26, 11, 46, 0.6);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(248, 249, 250, 0.1);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            flex: 1;
+        }
+
+        .setting-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .setting-description {
+            font-size: 0.9rem;
+            color: var(--star-silver);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: rgba(128, 128, 128, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--electric-blue);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(26px);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: var(--aurora-gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        .back-button {
+            background: linear-gradient(135deg, var(--electric-blue), var(--stellar-pink));
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            margin-top: 2rem;
+        }
+
+        .back-button:hover {
+            box-shadow: var(--glow-blue);
+            transform: translateY(-2px);
+        }
+
+        .cosmic-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(248, 249, 250, 0.1);
+            border-radius: 50px;
+            padding: 12px 24px;
+            display: flex;
+            gap: 20px;
+            z-index: 50;
+        }
+
+        .nav-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(45, 27, 105, 0.5);
+            border: 1px solid rgba(248, 249, 250, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .nav-icon:hover {
+            background: rgba(74, 144, 226, 0.3);
+            border-color: var(--electric-blue);
+            transform: scale(1.1);
+        }
+
+        .nav-icon.active {
+            background: var(--electric-blue);
+            border-color: var(--electric-blue);
+            box-shadow: var(--glow-blue);
+        }
+
+        @media (max-width: 768px) {
+            .user-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .achievement-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tab-buttons {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-4 pb-32">
+        <div class="max-w-6xl mx-auto">
+            <!-- Profile Center -->
+            <div class="profile-center mb-8">
+                <!-- Avatar with XP Ring and Aura -->
+                <div class="avatar-container">
+                    <div class="aura-effect" id="aura-effect"></div>
+                    <div class="xp-ring"></div>
+                    <div class="main-avatar" id="main-avatar">👽</div>
+                </div>
+
+                <!-- User Info -->
+                <h1 class="user-name" id="user-name">Cosmic Explorer</h1>
+                <p class="user-title" id="user-title">Seeker of Universal Truths</p>
+
+                <!-- Stats -->
+                <div class="user-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="user-level">7</div>
+                        <div class="stat-label">Level</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="user-xp">2,847</div>
+                        <div class="stat-label">XP</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="user-tokens">156</div>
+                        <div class="stat-label">Tokens</div>
+                    </div>
+                </div>
+
+                <!-- Mood Status -->
+                <div class="mb-4">
+                    <p class="text-sm text-gray-400 mb-2">Current Mood</p>
+                    <p class="text-lg font-semibold" id="mood-status">Contemplative & Connected</p>
+                </div>
+            </div>
+
+            <!-- Tab Container -->
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="profile">👤 Profile</button>
+                    <button class="tab-button" data-tab="wallet">💰 Wallet</button>
+                    <button class="tab-button" data-tab="achievements">🏆 Achievements</button>
+                    <button class="tab-button" data-tab="settings">⚙️ Settings</button>
+                </div>
+
+                <div class="tab-content" id="tab-content">
+                    <!-- Profile Tab -->
+                    <div class="tab-panel active" id="profile-panel">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Aura Color Selector -->
+                            <div class="settings-section">
+                                <h3 class="text-lg font-semibold mb-4">Aura Color</h3>
+                                <p class="text-sm text-gray-400 mb-4">Choose your cosmic aura color</p>
+                                <div class="color-picker" id="color-picker">
+                                    <div class="color-option selected" style="background: linear-gradient(45deg, #4a90e2, #e91e63);" data-color="cosmic"></div>
+                                    <div class="color-option" style="background: linear-gradient(45deg, #9b59b6, #3498db);" data-color="mystical"></div>
+                                    <div class="color-option" style="background: linear-gradient(45deg, #2ecc71, #f39c12);" data-color="vibrant"></div>
+                                    <div class="color-option" style="background: linear-gradient(45deg, #e74c3c, #34495e);" data-color="intense"></div>
+                                    <div class="color-option" style="background: linear-gradient(45deg, #1abc9c, #9b59b6);" data-color="serene"></div>
+                                    <div class="color-option" style="background: linear-gradient(45deg, #f39c12, #e67e22);" data-color="warm"></div>
+                                </div>
+                            </div>
+
+                            <!-- XP Progress Chart -->
+                            <div class="settings-section">
+                                <h3 class="text-lg font-semibold mb-4">XP Progress</h3>
+                                <div id="xp-progress-chart" style="height: 200px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wallet Tab -->
+                    <div class="tab-panel" id="wallet-panel">
+                        <div class="wallet-card">
+                            <div class="balance-display">
+                                <div class="balance-amount" id="token-balance">156</div>
+                                <div class="balance-label">Cosmic Tokens</div>
+                            </div>
+                            <div class="text-center mb-4">
+                                <p class="text-sm text-gray-400">Current Value: $12.48 USD</p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-lg font-semibold mb-4">Recent Transactions</h3>
+                        <div class="transaction-list" id="transaction-list">
+                            <!-- Transactions will be added dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Achievements Tab -->
+                    <div class="tab-panel" id="achievements-panel">
+                        <div class="achievement-grid" id="achievement-grid">
+                            <!-- Achievements will be added dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div class="tab-panel" id="settings-panel">
+                        <div class="settings-section">
+                            <h3 class="text-lg font-semibold mb-4">Privacy & Safety</h3>
+                            
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <div class="setting-title">Private Mode</div>
+                                    <div class="setting-description">Hide your online status and activity</div>
+                                </div>
+                                <div class="toggle-switch" data-setting="private-mode">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <div class="setting-title">Auto-Accept Bonds</div>
+                                    <div class="setting-description">Automatically accept cosmic bond requests</div>
+                                </div>
+                                <div class="toggle-switch" data-setting="auto-bond">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <div class="setting-title">Anonymous Mode</div>
+                                    <div class="setting-description">Appear as anonymous in public spaces</div>
+                                </div>
+                                <div class="toggle-switch active" data-setting="anonymous-mode">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3 class="text-lg font-semibold mb-4">Notifications</h3>
+                            
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <div class="setting-title">Event Notifications</div>
+                                    <div class="setting-description">Get notified about live cosmic events</div>
+                                </div>
+                                <div class="toggle-switch active" data-setting="event-notifications">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <div class="setting-title">Bond Requests</div>
+                                    <div class="setting-description">Notify when someone wants to form a bond</div>
+                                </div>
+                                <div class="toggle-switch active" data-setting="bond-notifications">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <div class="setting-title">Mood AI Suggestions</div>
+                                    <div class="setting-description">AI-powered mood and activity suggestions</div>
+                                </div>
+                                <div class="toggle-switch active" data-setting="mood-ai">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to Discover Button -->
+            <div class="text-center">
+                <button class="back-button" id="back-to-discover">
+                    🔮 Return to Discovery Universe
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="cosmic-nav">
+        <div class="nav-icon" data-page="discover">🔮</div>
+        <div class="nav-icon" data-page="connect">💬</div>
+        <div class="nav-icon" data-page="space">🌐</div>
+        <div class="nav-icon" data-page="leaderboard">⚔️</div>
+        <div class="nav-icon active" data-page="profile">🪙</div>
+    </div>
+
+    <script>
+        // Global state
+        let currentTab = 'profile';
+        let userData = {};
+        let xpChart;
+
+        // Mock data
+        const mockTransactions = [
+            { type: 'earned', title: 'Event Participation', amount: 25, timestamp: '2 hours ago', icon: '🎉' },
+            { type: 'spent', title: 'Aura Customization', amount: -10, timestamp: '1 day ago', icon: '🎨' },
+            { type: 'earned', title: 'Bond Formation', amount: 50, timestamp: '2 days ago', icon: '💫' },
+            { type: 'earned', title: 'Daily Login', amount: 5, timestamp: '3 days ago', icon: '📅' },
+            { type: 'earned', title: 'Meditation Streak', amount: 30, timestamp: '1 week ago', icon: '🧘' }
+        ];
+
+        const mockAchievements = [
+            { id: 1, title: 'First Connection', description: 'Form your first cosmic bond', icon: '💫', unlocked: true },
+            { id: 2, title: 'Stargazer', description: 'Participate in 5 meditation events', icon: '⭐', unlocked: true },
+            { id: 3, title: 'Cosmic Explorer', description: 'Connect with 25 different users', icon: '🚀', unlocked: true },
+            { id: 4, title: 'Astral Walker', description: 'Reach level 10', icon: '🌌', unlocked: false },
+            { id: 5, title: 'Crystal Master', description: 'Complete 10 healing sessions', icon: '💎', unlocked: false },
+            { id: 6, title: 'Empire Builder', description: 'Create a Tune Space with 50+ members', icon: '👑', unlocked: false },
+            { id: 7, title: 'Cosmic Emperor', description: 'Reach #1 in global rankings', icon: '🌟', unlocked: false },
+            { id: 8, title: 'Universal Sage', description: 'Help 100 users in their journey', icon: '🧙', unlocked: false }
+        ];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            initializeProfile();
+            setupEventListeners();
+            initializeXPChart();
+        });
+
+        function loadUserData() {
+            const savedData = localStorage.getItem('connectverse-user');
+            if (savedData) {
+                userData = JSON.parse(savedData);
+            }
+
+            // Load bond data if available
+            const bondData = localStorage.getItem('connectverse-bond');
+            if (bondData) {
+                const bond = JSON.parse(bondData);
+                userData.bondCount = (userData.bondCount || 0) + 1;
+            }
+        }
+
+        function initializeProfile() {
+            // Update user info
+            document.getElementById('user-name').textContent = userData.username || 'Cosmic Explorer';
+            document.getElementById('main-avatar').textContent = getAvatarEmoji(userData.avatar);
+            document.getElementById('mood-status').textContent = getMoodStatus(userData.mood);
+            
+            // Update stats
+            document.getElementById('user-level').textContent = userData.level || 7;
+            document.getElementById('user-xp').textContent = (userData.xp || 2847).toLocaleString();
+            document.getElementById('user-tokens').textContent = userData.tokens || 156;
+            
+            // Initialize tab content
+            createTransactions();
+            createAchievements();
+            
+            // Animate entrance
+            anime({
+                targets: '.profile-center > *',
+                opacity: [0, 1],
+                translateY: [30, 0],
+                duration: 800,
+                delay: anime.stagger(100),
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function getAvatarEmoji(avatar) {
+            const avatarMap = {
+                'cosmic-1': '👽',
+                'cosmic-2': '🌟',
+                'cosmic-3': '🌿',
+                'cosmic-4': '🔥',
+                'cosmic-5': '🌙',
+                'cosmic-6': '☀️'
+            };
+            return avatarMap[avatar] || '👤';
+        }
+
+        function getMoodStatus(mood) {
+            const moodMap = {
+                'cosmic': 'Exploring infinite possibilities',
+                'mystical': 'Connected to ancient wisdom',
+                'vibrant': 'Bursting with cosmic energy',
+                'intense': 'Deep in spiritual contemplation',
+                'serene': 'At peace with the universe'
+            };
+            return moodMap[mood] || 'Seeking cosmic truths';
+        }
+
+        function setupEventListeners() {
+            // Tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tab = this.dataset.tab;
+                    switchTab(tab);
+                    
+                    // Update active button
+                    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Color picker
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const color = this.dataset.color;
+                    selectAuraColor(color);
+                    
+                    // Update selection
+                    document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+
+            // Toggle switches
+            document.querySelectorAll('.toggle-switch').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const setting = this.dataset.setting;
+                    handleSettingToggle(setting, this.classList.contains('active'));
+                });
+            });
+
+            // Back to discover button
+            document.getElementById('back-to-discover').addEventListener('click', function() {
+                // Animate transition
+                anime({
+                    targets: 'body',
+                    opacity: [1, 0],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: () => {
+                        window.location.href = 'discover.html';
+                    }
+                });
+            });
+
+            // Navigation
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const page = this.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+
+            // Avatar click for customization
+            document.getElementById('main-avatar').addEventListener('click', function() {
+                showNotification('Avatar customization coming soon!', 'info');
+            });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Hide all panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.style.display = 'none';
+            });
+            
+            // Show selected panel
+            document.getElementById(`${tab}-panel`).style.display = 'block';
+            
+            // Animate panel entrance
+            anime({
+                targets: `#${tab}-panel > *`,
+                opacity: [0, 1],
+                translateY: [20, 0],
+                duration: 600,
+                delay: anime.stagger(100),
+                easing: 'easeOutExpo'
+            });
+        }
+
+        function selectAuraColor(color) {
+            const auraEffect = document.getElementById('aura-effect');
+            
+            switch(color) {
+                case 'cosmic':
+                    auraEffect.style.background = 'radial-gradient(circle, rgba(74, 144, 226, 0.3) 0%, transparent 70%)';
+                    break;
+                case 'mystical':
+                    auraEffect.style.background = 'radial-gradient(circle, rgba(155, 89, 182, 0.3) 0%, transparent 70%)';
+                    break;
+                case 'vibrant':
+                    auraEffect.style.background = 'radial-gradient(circle, rgba(46, 204, 113, 0.3) 0%, transparent 70%)';
+                    break;
+                case 'intense':
+                    auraEffect.style.background = 'radial-gradient(circle, rgba(231, 76, 60, 0.3) 0%, transparent 70%)';
+                    break;
+                case 'serene':
+                    auraEffect.style.background = 'radial-gradient(circle, rgba(26, 188, 156, 0.3) 0%, transparent 70%)';
+                    break;
+                case 'warm':
+                    auraEffect.style.background = 'radial-gradient(circle, rgba(243, 156, 18, 0.3) 0%, transparent 70%)';
+                    break;
+            }
+            
+            // Save preference
+            userData.auraColor = color;
+            localStorage.setItem('connectverse-user', JSON.stringify(userData));
+            
+            showNotification('Aura color updated!', 'success');
+        }
+
+        function handleSettingToggle(setting, enabled) {
+            userData[setting] = enabled;
+            localStorage.setItem('connectverse-user', JSON.stringify(userData));
+            
+            const settingNames = {
+                'private-mode': 'Private Mode',
+                'auto-bond': 'Auto-Accept Bonds',
+                'anonymous-mode': 'Anonymous Mode',
+                'event-notifications': 'Event Notifications',
+                'bond-notifications': 'Bond Notifications',
+                'mood-ai': 'Mood AI Suggestions'
+            };
+            
+            showNotification(`${settingNames[setting]} ${enabled ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        function createTransactions() {
+            const transactionList = document.getElementById('transaction-list');
+            transactionList.innerHTML = '';
+
+            mockTransactions.forEach(transaction => {
+                const transactionItem = document.createElement('div');
+                transactionItem.className = 'transaction-item';
+                
+                transactionItem.innerHTML = `
+                    <div class="transaction-icon">${transaction.icon}</div>
+                    <div class="transaction-details">
+                        <div class="transaction-title">${transaction.title}</div>
+                        <div class="transaction-time">${transaction.timestamp}</div>
+                    </div>
+                    <div class="transaction-amount">${transaction.amount > 0 ? '+' : ''}${transaction.amount}</div>
+                `;
+                
+                transactionList.appendChild(transactionItem);
+            });
+        }
+
+        function createAchievements() {
+            const achievementGrid = document.getElementById('achievement-grid');
+            achievementGrid.innerHTML = '';
+
+            mockAchievements.forEach(achievement => {
+                const achievementCard = document.createElement('div');
+                achievementCard.className = `achievement-card ${achievement.unlocked ? 'unlocked' : 'locked'}`;
+                
+                achievementCard.innerHTML = `
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-title">${achievement.title}</div>
+                    <div class="achievement-description">${achievement.description}</div>
+                `;
+                
+                achievementGrid.appendChild(achievementCard);
+            });
+        }
+
+        function initializeXPChart() {
+            const chartDom = document.getElementById('xp-progress-chart');
+            const myChart = echarts.init(chartDom);
+
+            const option = {
+                backgroundColor: 'transparent',
+                grid: {
+                    left: '10%',
+                    right: '10%',
+                    top: '10%',
+                    bottom: '10%'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+                    axisLine: { lineStyle: { color: '#4a90e2' } },
+                    axisLabel: { color: '#c0c0c0', fontSize: 10 }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { lineStyle: { color: '#4a90e2' } },
+                    axisLabel: { color: '#c0c0c0', fontSize: 10 },
+                    splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+                },
+                series: [{
+                    data: [1200, 1450, 1890, 2200, 2600, 2847],
+                    type: 'line',
+                    smooth: true,
+                    lineStyle: { color: '#ffd700', width: 3 },
+                    itemStyle: { color: '#ffd700' },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0, y: 0, x2: 0, y2: 1,
+                            colorStops: [
+                                { offset: 0, color: 'rgba(255, 215, 0, 0.3)' },
+                                { offset: 1, color: 'rgba(255, 215, 0, 0.05)' }
+                            ]
+                        }
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+        }
+
+        function navigateToPage(page) {
+            // Update active nav icon
+            document.querySelectorAll('.nav-icon').forEach(icon => {
+                icon.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            
+            // Animate navigation
+            anime({
+                targets: 'body',
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeInExpo',
+                complete: () => {
+                    window.location.href = `${page}.html`;
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg z-50 ${
+                type === 'error' ? 'bg-red-500' : 
+                type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+            } text-white`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            anime({
+                targets: notification,
+                opacity: [0, 1],
+                translateX: [100, 0],
+                duration: 300,
+                easing: 'easeOutExpo'
+            });
+            
+            setTimeout(() => {
+                anime({
+                    targets: notification,
+                    opacity: [1, 0],
+                    translateX: [0, 100],
+                    duration: 300,
+                    easing: 'easeInExpo',
+                    complete: () => notification.remove()
+                });
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
