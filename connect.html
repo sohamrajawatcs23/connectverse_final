@@ -470,17 +470,7 @@
 
     <script type="module">
         import { GoogleGenerativeAI } from "@google/generative-ai";
-        
-        // ========================================
-        // GEMINI API CONFIGURATION
-        // ========================================
-        // TO ENABLE AI CHAT:
-        // 1. Get your free API key from: https://makersuite.google.com/app/apikey
-        // 2. Replace 'YOUR_GEMINI_API_KEY_HERE' below with your actual API key
-        // 3. Refresh the page
-        // 
-        // Example: const API_KEY = 'AIzaSyC1234567890abcdefghijklmnopqrstuv';
-        // ========================================
+
         
         const API_KEY = 'AIzaSyCbWs75EuQf_WTdLQfPIgUcJBx-QNkGi8E'; // Replace with your actual API key
         
@@ -736,35 +726,39 @@
 
         async function getAIResponse(userMessage) {
             try {
-                // Create chat session with history
-                const chat = model.startChat({
-                    history: [
-                        {
-                            role: "user",
-                            parts: [{ text: systemPrompt }]
-                        },
-                        {
-                            role: "model",
-                            parts: [{ text: "I understand! I'll be your cosmic companion, bringing warmth, mysticism, and spiritual insight to our connection. Let's explore the universe together! ✨" }]
-                        },
-                        ...chatHistory
-                    ],
-                    generationConfig: {
-                        temperature: 0.9,
-                        maxOutputTokens: 150,
-                    },
+                // Prefer serverless proxy for security
+                const payload = {
+                    message: userMessage,
+                    systemPrompt,
+                    history: chatHistory.slice(-10)
+                };
+                const res = await fetch('/api/ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
+                let aiMessage = '';
+                if (res.ok) {
+                    const data = await res.json();
+                    aiMessage = (data.text || '').trim();
+                } else {
+                    console.warn('Proxy failed, falling back to client SDK');
+                }
 
-                // Send message and get response
-                console.log('Sending message to AI:', userMessage);
-                const result = await chat.sendMessage(userMessage);
-                console.log('Got result:', result);
-                
-                const response = await result.response;
-                console.log('Got response:', response);
-                
-                const aiMessage = response.text();
-                console.log('AI message:', aiMessage);
+                // Fallback to client SDK if proxy fails or empty
+                if (!aiMessage) {
+                    const chat = model.startChat({
+                        history: [
+                            { role: "user", parts: [{ text: systemPrompt }] },
+                            { role: "model", parts: [{ text: "I understand! I'll be your cosmic companion, bringing warmth, mysticism, and spiritual insight to our connection. Let's explore the universe together! ✨" }] },
+                            ...chatHistory
+                        ],
+                        generationConfig: { temperature: 0.9, maxOutputTokens: 150 },
+                    });
+                    const result = await chat.sendMessage(userMessage);
+                    const response = await result.response;
+                    aiMessage = response.text();
+                }
 
                 if (!aiMessage || aiMessage.trim() === '') {
                     throw new Error('Empty response from AI');
@@ -855,9 +849,9 @@
             // Only simulate if user hasn't sent a message recently and AI is not responding
             if (Math.random() > 0.5 || isAIResponding) return; // 50% chance to type
             
-            showTypingIndicator();
-            
-            // Use AI to generate spontaneous message if API key is set
+                hideTypingIndicator();
+                addMessage(aiMessage, 'received');
+                messageCount++;
             if (API_KEY && API_KEY !== 'YOUR_GEMINI_API_KEY_HERE' && Math.random() > 0.5) {
                 try {
                     const topics = [
@@ -1094,30 +1088,38 @@
             showTypingIndicator();
             
             try {
-                const genAI = new GoogleGenerativeAI(API_KEY);
-                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-                
-                const chat = model.startChat({
-                    history: [
-                        {
-                            role: "user",
-                            parts: [{ text: "You are a friendly cosmic AI assistant having a voice conversation. Keep responses concise (2-3 sentences) and conversational." }],
-                        },
-                        {
-                            role: "model",
-                            parts: [{ text: "Hello! I'm your cosmic companion, ready to chat about anything across the universe. What's on your mind?" }],
-                        },
-                        ...chatHistory.slice(-6)
-                    ],
-                    generationConfig: {
-                        temperature: 0.9,
-                        maxOutputTokens: 150,
-                    },
+                // Prefer proxy
+                const res = await fetch('/api/ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: userMessage,
+                        systemPrompt: 'You are a friendly cosmic AI assistant having a voice conversation. Keep responses concise (2-3 sentences) and conversational.',
+                        history: chatHistory.slice(-6)
+                    })
                 });
-
-                const result = await chat.sendMessage(userMessage);
-                const response = await result.response;
-                const aiMessage = response.text();
+                let aiMessage = '';
+                if (res.ok) {
+                    const data = await res.json();
+                    aiMessage = (data.text || '').trim();
+                }
+                
+                // Fallback
+                if (!aiMessage) {
+                    const genAI = new GoogleGenerativeAI(API_KEY);
+                    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+                    const chat = model.startChat({
+                        history: [
+                            { role: "user", parts: [{ text: 'You are a friendly cosmic AI assistant having a voice conversation. Keep responses concise (2-3 sentences) and conversational.' }] },
+                            { role: "model", parts: [{ text: "Hello! I'm your cosmic companion, ready to chat about anything across the universe. What's on your mind?" }] },
+                            ...chatHistory.slice(-6)
+                        ],
+                        generationConfig: { temperature: 0.9, maxOutputTokens: 150 },
+                    });
+                    const result = await chat.sendMessage(userMessage);
+                    const response = await result.response;
+                    aiMessage = response.text();
+                }
                 
                 hideTypingIndicator();
                 addMessage(aiMessage, 'received');
